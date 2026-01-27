@@ -1,0 +1,61 @@
+<div class="courses-root">Loading courses...</div>
+
+<style>
+  .courses-root {
+    font-family:
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      Roboto,
+      Arial;
+  }
+  .course {
+    border: 1px solid #e6e6e6;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 6px;
+  }
+  .course h3 {
+    margin: 0 0 6px 0;
+  }
+  .prof-list {
+    margin: 8px 0 0 16px;
+  }
+</style>
+
+<script type="module" is:inline>
+  const root = document.querySelector(".courses-root");
+  if (!root) {
+    console.error("Courses root not found");
+  } else {
+    async function load() {
+      root.textContent = "Loading courses...";
+      try {
+        const res = await fetch("/api/courses");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const courses = await res.json();
+
+        root.innerHTML = "";
+        courses.forEach((course) => {
+          const el = document.createElement("div");
+          el.className = "course";
+
+          const title = document.createElement("h3");
+          title.textContent = `${course.nombre} (${course.clave})`;
+          el.appendChild(title);
+
+          const meta = document.createElement("div");
+          meta.textContent = `Semester: ${course.semestre ?? "—"}`;
+          el.appendChild(meta);
+
+          root.appendChild(el);
+        });
+      } catch (err) {
+        root.textContent = "Failed to load courses.";
+        console.error(err);
+      }
+    }
+
+    load();
+  }
+</script>
