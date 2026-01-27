@@ -1,8 +1,8 @@
-import { supabase } from "../../lib/supabase";
+import { supabaseServer } from "../../lib/supabase";
 
 export async function GET() {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseServer
       .from("courses")
       .select(
         "course_id,clave,nombre,semestre,profesor_courses(profesores(profesor_id,nombre,departamento,email))",
