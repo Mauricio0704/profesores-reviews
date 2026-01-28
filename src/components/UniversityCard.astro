@@ -1,0 +1,110 @@
+---
+import { 
+  GraduationCap, 
+  MapPin, 
+  Star, 
+  MessageSquare, 
+  Building2, 
+  ChevronRight 
+} from '@lucide/astro';
+
+interface Props {
+  name: string;
+  slug: string;
+  location?: string;
+  avgRating?: number;
+  professorCount?: number;
+  reviewCount?: number;
+  departmentCount?: number;
+}
+
+const { 
+  name, 
+  slug, 
+  location = "Campus Principal",
+  avgRating = 0, 
+  professorCount = 0, 
+  reviewCount = 0, 
+  departmentCount = 0 
+} = Astro.props;
+
+const showLocation = false; // Currently not used
+const showIcon = false; // Currently not used
+const searchTerms = `${name} ${slug} ${location}`.toLowerCase();
+---
+
+<a 
+  href={`/university/${slug}`}
+  data-search-terms={searchTerms}
+  class="university-card-item group bg-white rounded-2xl border-2 border-gray-200 p-8 hover:border-indigo-500 hover:shadow-2xl transition-all duration-300 text-left relative overflow-hidden block"
+>
+  {/* Gradient Background Effect (Hover) */}
+  <div class="absolute inset-0 bg-gradient-to-br from-indigo-50 to-blue-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+  
+  {/* Content Container */}
+  <div class="relative z-10">
+    
+    {/* Icon Header */}
+    {showIcon && (
+        <div class="bg-gradient-to-br from-indigo-100 to-blue-100 rounded-xl p-3 w-fit mb-4 group-hover:scale-110 transition-transform duration-300">
+            <GraduationCap class="w-8 h-8 text-indigo-600" />
+        </div>  
+    )}
+
+    {/* College Info */}
+    <div class="mb-5">
+        <h3 class="text-xl font-bold text-gray-900 mb-1 group-hover:text-indigo-600 transition-colors">
+            {slug.toUpperCase()}
+        </h3>
+        {showLocation &&(
+            <div class="flex items-center gap-2 text-xs text-gray-500">
+                <MapPin class="w-3 h-3" />
+                <span>{location}</span>
+            </div>
+        )}
+    </div>
+
+    {/* Stats Grid */}
+    <div class="space-y-3 mb-4">
+      
+      {/* Average Rating Box */}
+      <div class="flex items-center justify-between p-3 bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg border border-yellow-200">
+        <div class="flex items-center gap-2">
+          <Star class="w-5 h-5 text-yellow-500 fill-yellow-500" />
+          <span class="text-sm font-semibold text-gray-700">Calificación Promedio</span>
+        </div>
+        <span class="text-lg font-bold text-gray-900">
+          {avgRating > 0 ? avgRating.toFixed(1) : '-'}
+        </span>
+      </div>
+
+      {/* Professors & Reviews Row */}
+      <div class="grid grid-cols-2 gap-2">
+        <div class="flex flex-col items-center p-2.5 bg-blue-50 rounded-lg border border-blue-200">
+          <GraduationCap class="w-4 h-4 text-blue-600 mb-1" />
+          <span class="text-xs text-gray-600 mb-0.5">Profesores</span>
+          <span class="font-bold text-gray-900">{professorCount}</span>
+        </div>
+        <div class="flex flex-col items-center p-2.5 bg-indigo-50 rounded-lg border border-indigo-200">
+          <MessageSquare class="w-4 h-4 text-indigo-600 mb-1" />
+          <span class="text-xs text-gray-600 mb-0.5">Reseñas</span>
+          <span class="font-bold text-gray-900">{reviewCount}</span>
+        </div>
+      </div>
+
+      {/* Departments Badge */}
+      <div class="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
+        <Building2 class="w-4 h-4 text-gray-500" />
+        <span class="text-sm text-gray-600">{departmentCount} Departamentos</span>
+      </div>
+    </div>
+
+    {/* Action Footer */}
+    <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+      <span class="text-sm font-medium text-indigo-600 group-hover:text-indigo-700">
+        Ver Profesores
+      </span>
+      <ChevronRight class="w-5 h-5 text-indigo-600 group-hover:translate-x-1 transition-transform" />
+    </div>
+  </div>
+</a>
