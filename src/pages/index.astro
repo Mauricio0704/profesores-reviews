@@ -7,14 +7,66 @@ import UniversityCard from '~/components/UniversityCard.astro';
 import UniversitySearch from '~/components/UniversitySearch.astro';
 import { supabaseServer } from '../lib/supabase';
 
-// Consultas directamente a la DB, sin pasar por fetch('/api/...')
-const { data: universities, error } = await supabaseServer
-  .from('universities')
-  .select('*');
+const { data, error } = await supabaseServer
+    .from('universities')
+    .select(`
+        id,
+        name,
+        slug,
+        courses (
+            id,
+            reviews (
+                rating
+            ),
+            professor_course_campus (
+                professors (
+                    id,
+                    department
+                )
+            )
+        )
+    `)
+    .order('name', { ascending: true });
 
 if (error) {
-  console.error("Error de Supabase:", error.message);
+    console.error('Error de Supabase:', error.message);
 }
+
+const universitiesStats = (data || []).map((u: any) => {
+    const courses = u.courses || [];
+    const all_reviews = courses.flatMap((c: any) => c.reviews || []);
+    const review_count = all_reviews.length;
+
+    const total_rating = all_reviews.reduce((sum: number, r: any) => sum + (r?.rating ?? 0), 0);
+    const avg_rating = review_count > 0 ? total_rating / review_count : 0;
+
+    const all_professors = courses.flatMap((c: any) =>
+        (c.professor_course_campus || []).flatMap((pcc: any) => {
+            const profs = pcc?.professors;
+            if (!profs) return [];
+            return Array.isArray(profs) ? profs : [profs];
+        })
+    );
+
+    const unique_professors = new Set(all_professors.filter(Boolean).map((p: any) => p.id));
+    const unique_departments = new Set(
+        all_professors
+            .filter((p: any) => p && p.department)
+            .map((p: any) => p.department.trim().toLowerCase())
+    );
+
+    return {
+        name: u.name,
+        slug: u.slug,
+        avg_rating,
+        review_count,
+        professor_count: unique_professors.size,
+        department_count: unique_departments.size,
+    };
+});
+
+const universities = universitiesStats;
+
 ---
 
 <Layout>
