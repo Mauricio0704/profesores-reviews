@@ -19,12 +19,12 @@
 
           const title = document.createElement("h3");
           title.className = "text-lg font-semibold mb-1";
-          title.textContent = `${course.nombre} (${course.clave})`;
+          title.textContent = `${course.name} (${course.code})`;
           el.appendChild(title);
 
           const meta = document.createElement("div");
           meta.className = "text-sm text-slate-600";
-          meta.textContent = `Semester: ${course.semestre ?? "—"}`;
+          meta.textContent = `Semester: ${course.semester ?? "—"}`;
           el.appendChild(meta);
 
           root.appendChild(el);

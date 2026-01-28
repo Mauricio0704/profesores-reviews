@@ -1,12 +1,47 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Courses from '../components/Courses.astro';
+import Professors from '~/components/Professors.astro';
+import Header from '../components/Header.astro';
+import UniversityCard from '~/components/UniversityCard.astro';
+import UniversitySearch from '~/components/UniversitySearch.astro';
 
+const response = await fetch(new URL('../api/universities', Astro.url));
+const universities = await response.json();
 ---
 
 <Layout>
-	<section class="max-w-3xl mx-auto my-8 px-4">
-		<h2 class="text-2xl font-semibold mb-4">Courses & Professors</h2>
-		<Courses />
-	</section>
+	<body>
+		<div class="min-h-screen w-full bg-gradient-to-br from-indigo-50 via-blue-50 to-slate-50">
+			{/*Main Content*/}
+			<main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+				{/*Title*/}
+				<div class="text-center mb-12">
+					<h2 class="text-4xl font-bold text-gray-900 mb-3">
+						Selecciona Tu Universidad
+					</h2>
+					<p class="text-lg text-gray-600">
+						Escoge tu universidad para ver los profesores calificados.
+					</p>
+				</div>
+				{/*Search Bar*/}
+				<UniversitySearch />
+
+				{/*College Cards Grid*/}
+				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+				{universities.map((uni: any) => (
+					<UniversityCard 
+					name={uni.name}
+					slug={uni.slug}
+					location="Monterrey, NL" 
+					avgRating={uni.avg_rating}         
+					professorCount={uni.professor_count}    
+					reviewCount={uni.review_count}       
+					departmentCount={uni.department_count}     
+					/>
+				))}
+				</div>
+			</main>
+		</div>
+	</body>
 </Layout>

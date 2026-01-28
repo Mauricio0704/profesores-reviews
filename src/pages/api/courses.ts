@@ -17,9 +17,9 @@ export async function GET() {
 
     const courses = (data || []).map((c: any) => ({
       course_id: c.id,
-      clave: c.code,
-      nombre: c.name,
-      semestre: c.semester,
+      code: c.code,
+      name: c.name,
+      semester: c.semester,
     }));
 
     return new Response(JSON.stringify(courses), {

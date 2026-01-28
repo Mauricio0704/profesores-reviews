@@ -27,7 +27,7 @@ export async function GET({ request }: { request: Request }) {
     // Base query: select basic professor fields and rely on DB columns for aggregates
     let qb = supabaseServer
       .from("professors")
-      .select("id,name")
+      .select("id,name,department")
       .range(rangeStart, rangeEnd);
 
     // Apply optional filters where possible
@@ -50,6 +50,7 @@ export async function GET({ request }: { request: Request }) {
     const professors = (data || []).map((p: any) => ({
       id: p.id,
       name: p.name,
+      department: p.department || "N/A",
       reviews_count: p.reviews_count ?? 0,
     }));
 
