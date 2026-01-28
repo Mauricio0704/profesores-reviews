@@ -5,10 +5,16 @@ import Professors from '~/components/Professors.astro';
 import Header from '../components/Header.astro';
 import UniversityCard from '~/components/UniversityCard.astro';
 import UniversitySearch from '~/components/UniversitySearch.astro';
+import { supabaseServer } from '../lib/supabase';
 
-const origin = new URL(Astro.request.url).origin;
-const response = await fetch(`${origin}/api/universities`);
-const universities = await response.json();
+// Consultas directamente a la DB, sin pasar por fetch('/api/...')
+const { data: universities, error } = await supabaseServer
+  .from('universities')
+  .select('*');
+
+if (error) {
+  console.error("Error de Supabase:", error.message);
+}
 ---
 
 <Layout>
