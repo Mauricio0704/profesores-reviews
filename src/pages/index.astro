@@ -6,7 +6,7 @@ import Header from '../components/Header.astro';
 import UniversityCard from '~/components/UniversityCard.astro';
 import UniversitySearch from '~/components/UniversitySearch.astro';
 
-const response = await fetch(new URL('../api/universities', Astro.url));
+const response = await fetch(new URL('/api/universities', Astro.url));
 const universities = await response.json();
 ---
 
