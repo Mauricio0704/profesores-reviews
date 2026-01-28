@@ -6,8 +6,33 @@ import Header from '../components/Header.astro';
 import UniversityCard from '~/components/UniversityCard.astro';
 import UniversitySearch from '~/components/UniversitySearch.astro';
 
-const response = await fetch(new URL('/api/universities', Astro.url));
-const universities = await response.json();
+// const response = await fetch(new URL('/api/universities', Astro.url));
+const universities = [
+    {
+        name: "Universidad Autónoma de Nuevo León",
+        slug: "uanl",
+        avg_rating: 4.2,
+        professor_count: 1200,
+        review_count: 4500,
+        department_count: 35,
+    },
+    {
+        name: "Instituto Tecnológico y de Estudios Superiores de Monterrey",
+        slug: "itesm",
+        avg_rating: 4.5,
+        professor_count: 900,
+        review_count: 3200,
+        department_count: 28,
+    },
+    {
+        name: "Universidad de Monterrey",
+        slug: "udem",
+        avg_rating: 4.1,
+        professor_count: 600,
+        review_count: 2100,
+        department_count: 22,
+    },
+];
 ---
 
 <Layout>
