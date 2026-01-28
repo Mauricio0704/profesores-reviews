@@ -1,30 +1,7 @@
-<div class="courses-root">Loading courses...</div>
-
-<style>
-  .courses-root {
-    font-family:
-      system-ui,
-      -apple-system,
-      "Segoe UI",
-      Roboto,
-      Arial;
-  }
-  .course {
-    border: 1px solid #e6e6e6;
-    padding: 12px;
-    margin: 10px 0;
-    border-radius: 6px;
-  }
-  .course h3 {
-    margin: 0 0 6px 0;
-  }
-  .prof-list {
-    margin: 8px 0 0 16px;
-  }
-</style>
+<div id="courses-root" class="font-sans">Loading courses...</div>
 
 <script type="module" is:inline>
-  const root = document.querySelector(".courses-root");
+  const root = document.getElementById("courses-root");
   if (!root) {
     console.error("Courses root not found");
   } else {
@@ -38,13 +15,15 @@
         root.innerHTML = "";
         courses.forEach((course) => {
           const el = document.createElement("div");
-          el.className = "course";
+          el.className = "border border-slate-200 p-3 my-2 rounded-md bg-white";
 
           const title = document.createElement("h3");
+          title.className = "text-lg font-semibold mb-1";
           title.textContent = `${course.nombre} (${course.clave})`;
           el.appendChild(title);
 
           const meta = document.createElement("div");
+          meta.className = "text-sm text-slate-600";
           meta.textContent = `Semester: ${course.semestre ?? "—"}`;
           el.appendChild(meta);
 
