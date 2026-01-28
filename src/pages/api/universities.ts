@@ -1,4 +1,3 @@
-import { boolean } from "astro:schema";
 import { supabaseServer } from "~/lib/supabase";
 
 export async function GET() {
