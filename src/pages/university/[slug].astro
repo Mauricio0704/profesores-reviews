@@ -1,0 +1,32 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { supabaseServer } from "../../lib/supabase";
+
+const { slug } = Astro.params;
+
+const { data: university, error } = await supabaseServer
+  .from("universities")
+  .select("*")
+  .eq("slug", slug)
+  .single();
+
+if (error || !university) {
+  return Astro.redirect('/404');
+}
+---
+
+<Layout
+    subtitle={university.name} 
+>   
+    <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 text-center">
+             <h1 class="text-3xl font-bold text-gray-900 mb-4">
+                Bienvenido a {university.name}
+            </h1>
+            <p class="text-gray-600">
+                Aquí cargaremos la lista de profesores pronto.
+            </p>
+        </div>
+    </div>
+
+</Layout>

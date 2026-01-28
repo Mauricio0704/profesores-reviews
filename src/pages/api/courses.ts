@@ -5,7 +5,7 @@ export async function GET() {
     const { data, error } = await supabaseServer
       .from("courses")
       .select(
-        "course_id,clave,nombre,semestre,profesor_courses(profesores(profesor_id,nombre,departamento,email))",
+        "id,name,code,semester",
       );
 
     if (error) {
@@ -16,13 +16,10 @@ export async function GET() {
     }
 
     const courses = (data || []).map((c: any) => ({
-      course_id: c.course_id,
-      clave: c.clave,
-      nombre: c.nombre,
-      semestre: c.semestre,
-      professors: (c.profesor_courses || [])
-        .map((pc: any) => pc.profesores)
-        .filter(Boolean),
+      course_id: c.id,
+      code: c.code,
+      name: c.name,
+      semester: c.semester,
     }));
 
     return new Response(JSON.stringify(courses), {

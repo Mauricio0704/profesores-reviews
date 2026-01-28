@@ -1,0 +1,40 @@
+<div id="universities-root" class="font-sans">Cargando universidades...</div>
+
+<script type="module" is:inline>
+  const root = document.getElementById("universities-root");
+  if (!root) {
+    console.error("Universities root not found");
+  } else {
+    async function load() {
+      root.textContent = "Cargando universidades...";
+      try {
+        const res = await fetch("/api/universities");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const universities = await res.json();
+
+        root.innerHTML = "";
+        universities.forEach((university) => {
+          const el = document.createElement("div");
+          el.className = "border border-slate-200 p-3 my-2 rounded-md bg-white uni-card";
+          el.setAttribute('data-name', university.name);
+
+          const name = document.createElement("h3");
+          name.className = "text-lg font-semibold mb-1";
+          name.textContent = `${university.name}`;
+          el.appendChild(name);
+
+          const location = document.createElement("div");
+          location.className = "text-sm text-slate-600";
+          location.textContent = `Slug: ${university.slug.toUpperCase() ?? "—"}`;
+          el.appendChild(location);
+
+          root.appendChild(el);
+        });
+      } catch (err) {
+        root.textContent = "Error al cargar las universidades.";
+        console.error(err);
+      }
+    }
+
+    load();
+  }
