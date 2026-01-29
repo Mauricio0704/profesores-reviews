@@ -5,7 +5,7 @@ interface Props {
     id: string;
     name: string;
     department: string;
-    matching_courses?: string[]; // Recibirá strings tipo "MA1031 - Materia"
+    matching_courses?: string[];
     pending?: boolean;
     avg_rating?: number;
     avg_difficulty?: number;
@@ -25,7 +25,7 @@ const {
     retake_rate = 0
 } = Astro.props;
 
-// ... (helpers de rating se mantienen igual)
+
 const getRatingLabel = (rating: number) => { 
     if (rating >= 4.5) return "Excelente";
     if (rating >= 3.5) return "Bueno";
@@ -48,11 +48,6 @@ const getRatingColor = (rating: number) => {
     data-name={name.toLowerCase()}
     data-department={department.toLowerCase()}
     
-    {/* IMPORTANTE: 
-        Al hacer el join aquí, 'data-courses' ahora contendrá algo como: 
-        "ma1031 - matemáticas tc2005 - programación".
-        Por eso el buscador encontrará "ma1031" automáticamente.
-    */}
     data-courses={matching_courses.join(' ').toLowerCase()}
 >
     {/* Header y Stats (Sin cambios) */}
@@ -107,9 +102,6 @@ const getRatingColor = (rating: number) => {
                         {matching_courses.slice(0, 2).map((course) => (
                             <div class="flex items-center gap-2">
                                 <BookOpen class="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
-                                {/* AQUÍ SE IMPRIME EL STRING COMPLETO:
-                                    Ej: "MA1031 - Matemáticas"
-                                */}
                                 <p class="text-sm text-gray-700 truncate">{course}</p>
                             </div>
                         ))}

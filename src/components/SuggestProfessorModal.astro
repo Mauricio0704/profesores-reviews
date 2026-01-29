@@ -2,7 +2,7 @@
 import { X } from '@lucide/astro';
 
 interface Props {
-  universityId: string; // Lo necesitaremos después para saber a qué uni sugerir
+  universityId: string;
 }
 
 const { universityId } = Astro.props;
@@ -37,7 +37,6 @@ const { universityId } = Astro.props;
 </div>
 
 <script>
-    // Lógica interna para cerrar el modal
     const modal = document.getElementById('suggest-modal');
     const closeBtn = document.getElementById('close-modal-btn');
     const cancelBtn = document.getElementById('cancel-btn');
@@ -51,7 +50,6 @@ const { universityId } = Astro.props;
     cancelBtn?.addEventListener('click', closeModal);
     overlay?.addEventListener('click', closeModal);
 
-    // Cerrar con tecla ESC
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && !modal?.classList.contains('hidden')) {
             closeModal();
