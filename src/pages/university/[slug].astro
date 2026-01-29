@@ -164,37 +164,30 @@ const totalProfessors = professors.length;
 
     cards.forEach((card) => {
       const element = card as HTMLElement;
-      // Elementos internos
       const coursesContainer = element.querySelector('.courses-container');
 
-      // Datos
       const name = element.dataset.name || '';
       const dept = element.dataset.department || '';
       const courses = element.dataset.courses || '';
 
-      // Checks de coincidencia individuales
       const matchesName = name.includes(query);
       const matchesDept = dept.includes(query);
       const matchesCourses = courses.includes(query);
 
-      // Lógica de visibilidad general de la tarjeta
       if (matchesName || matchesDept || matchesCourses) {
-        element.style.display = ''; // Mostrar tarjeta
+        element.style.display = '';
         visibleCount++;
 
-        // 👇 LA MAGIA: Lógica de visibilidad de la sección "Imparte"
         if (coursesContainer) {
-            // Si hay búsqueda Y la coincidencia fue por materia, quitamos el hidden
             if (query.length > 0 && matchesCourses) {
                 coursesContainer.classList.remove('hidden');
             } else {
-                // Si busqué por nombre ("Juan"), o no hay búsqueda, ocultamos las materias
                 coursesContainer.classList.add('hidden');
             }
         }
 
       } else {
-        element.style.display = 'none'; // Ocultar tarjeta
+        element.style.display = 'none';
       }
     });
 
@@ -204,8 +197,7 @@ const totalProfessors = professors.length;
         const foundText = visibleCount === 1 ? 'encontrado' : 'encontrados';
         countElement.textContent = `${visibleCount} ${professorText} ${foundText}`;
     }
-    
-    // Toggle entre Grid y Empty State (Igual que antes)
+
     if (visibleCount === 0 && cards.length > 0) {
         if(noResults) noResults.classList.remove('hidden');
         if(grid) grid.classList.add('hidden');
