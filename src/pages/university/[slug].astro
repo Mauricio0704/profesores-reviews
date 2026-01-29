@@ -15,9 +15,8 @@ const { data: university, error } = await supabaseServer
     id, name, slug,
     courses (
         id, name, code,
-        reviews (quality, difficulty, would_recommend),
         professor_course_campus (
-            professors (id, name, department)
+          professors (id, name, department, reviews (quality, difficulty, would_recommend, course_id))
         )
     )
   `)
@@ -29,45 +28,62 @@ if (error || !university) {
 }
 
 const professorsMap = new Map();
+const professorRaw = new Map();
+const courseIds = new Set(university.courses.map((c: any) => c.id));
 
+// Collect unique professors and the courses they teach at this university
 university.courses.forEach((course: any) => {
-    const profsInCourse = course.professor_course_campus?.flatMap((pcc: any) => pcc.professors) || [];
-    const courseReviews = course.reviews || [];
+  const profsInCourse = course.professor_course_campus?.flatMap((pcc: any) => pcc.professors) || [];
 
-    profsInCourse.forEach((prof: any) => {
-        if (!prof) return;
-        if (!professorsMap.has(prof.id)) {
-            professorsMap.set(prof.id, {
-                id: prof.id,
-                name: prof.name,
-                department: prof.department,
-                courses: new Set(),
-                totalQuality: 0,
-                totalDifficulty: 0,
-                totalRetake: 0,
-                reviewCount: 0
-            });
-        }
-        const stats = professorsMap.get(prof.id);
-        stats.courses.add(`${course.code} - ${course.name}`);
-        courseReviews.forEach((review: any) => {
-            stats.totalQuality += review.quality || 0;
-            stats.totalDifficulty += review.difficulty || 0;
-            stats.totalRetake += review.would_take_again ? 1 : 0;
-            stats.reviewCount++;
-        });
-    });
+  profsInCourse.forEach((prof: any) => {
+    if (!prof) return;
+    if (!professorsMap.has(prof.id)) {
+      professorsMap.set(prof.id, {
+        id: prof.id,
+        name: prof.name,
+        department: prof.department,
+        courses: new Set(),
+        totalQuality: 0,
+        totalDifficulty: 0,
+        totalRetake: 0,
+        reviewCount: 0
+      });
+    }
+
+    // store a reference to the raw professor object (with their reviews)
+    if (!professorRaw.has(prof.id)) {
+      professorRaw.set(prof.id, prof);
+    }
+
+    const stats = professorsMap.get(prof.id);
+    stats.courses.add(`${course.code} - ${course.name}`);
+  });
 });
 
+for (const [profId, prof] of professorRaw.entries()) {
+  const stats = professorsMap.get(profId);
+  const reviews = prof.reviews || [];
+
+  reviews.forEach((review: any) => {
+    // Only count reviews that are for courses belonging to this university
+    if (review.course_id && !courseIds.has(review.course_id)) return;
+
+    stats.totalQuality += review.quality || 0;
+    stats.totalDifficulty += review.difficulty || 0;
+    stats.totalRetake += review.would_recommend ? 1 : 0;
+    stats.reviewCount++;
+  });
+}
+
 const professors = Array.from(professorsMap.values()).map((p: any) => ({
-    id: p.id,
-    name: p.name,
-    department: p.department,
-    courses: Array.from(p.courses),
-    avg_rating: p.reviewCount > 0 ? p.totalQuality / p.reviewCount : 0,
-    avg_difficulty: p.reviewCount > 0 ? p.totalDifficulty / p.reviewCount : 0,
-    retake_rate: p.reviewCount > 0 ? Math.round((p.totalRetake / p.reviewCount) * 100) : 0,
-    review_count: p.reviewCount
+  id: p.id,
+  name: p.name,
+  department: p.department,
+  courses: Array.from(p.courses),
+  avg_rating: p.reviewCount > 0 ? p.totalQuality / p.reviewCount : 0,
+  avg_difficulty: p.reviewCount > 0 ? p.totalDifficulty / p.reviewCount : 0,
+  retake_rate: p.reviewCount > 0 ? Math.round((p.totalRetake / p.reviewCount) * 100) : 0,
+  review_count: p.reviewCount
 }));
 
 const totalProfessors = professors.length;
