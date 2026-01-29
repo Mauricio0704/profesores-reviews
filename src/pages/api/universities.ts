@@ -13,7 +13,7 @@ export async function GET() {
             reviews (
                 rating
             ),
-            professor_course_campus (
+            professor_course_university (
                 professors (
                 id,
                 department
@@ -37,7 +37,7 @@ export async function GET() {
             const avg_rating = review_count > 0 ? total_rating / review_count : 0;
 
             const all_professors = courses.flatMap((c: any) => 
-                (c.professor_course_campus || []).map((pcc: any) => pcc.professors)
+                (c.professor_course_university || []).map((pcc: any) => pcc.professors)
             );
             const unique_professors = new Set(all_professors.map((p: any) => p.id));
             const unique_departments = new Set(
