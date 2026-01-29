@@ -1,0 +1,60 @@
+---
+import { X } from '@lucide/astro';
+
+interface Props {
+  universityId: string; // Lo necesitaremos después para saber a qué uni sugerir
+}
+
+const { universityId } = Astro.props;
+---
+
+<div id="suggest-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    
+    <div id="modal-overlay" class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity"></div>
+
+    <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden transform transition-all scale-100">
+        
+        <div class="flex items-center justify-between p-6 border-b border-gray-100">
+            <h3 class="text-lg font-bold text-gray-900">Sugerir un Profesor</h3>
+            <button id="close-modal-btn" class="text-gray-400 hover:text-gray-500 transition-colors">
+                <X class="w-6 h-6" />
+            </button>
+        </div>
+
+        <div class="p-6 space-y-4">
+            <p class="text-gray-600">
+                Aquí irá el formulario para sugerir un profesor a esta universidad.
+                (ID: {universityId})
+            </p>
+            
+            <div class="flex justify-end pt-4">
+                <button id="cancel-btn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Lógica interna para cerrar el modal
+    const modal = document.getElementById('suggest-modal');
+    const closeBtn = document.getElementById('close-modal-btn');
+    const cancelBtn = document.getElementById('cancel-btn');
+    const overlay = document.getElementById('modal-overlay');
+
+    const closeModal = () => {
+        modal?.classList.add('hidden');
+    };
+
+    closeBtn?.addEventListener('click', closeModal);
+    cancelBtn?.addEventListener('click', closeModal);
+    overlay?.addEventListener('click', closeModal);
+
+    // Cerrar con tecla ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modal?.classList.contains('hidden')) {
+            closeModal();
+        }
+    });
+</script>

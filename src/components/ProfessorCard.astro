@@ -1,0 +1,135 @@
+---
+import { Star, BookOpen, ArrowRight } from '@lucide/astro';
+
+interface Props {
+    id: string;
+    name: string;
+    department: string;
+    matching_courses?: string[]; // Recibirá strings tipo "MA1031 - Materia"
+    pending?: boolean;
+    avg_rating?: number;
+    avg_difficulty?: number;
+    retake_rate?: number;
+    review_count?: number;
+}
+
+const { 
+    id,
+    name, 
+    department,
+    matching_courses = [],
+    pending = false,
+    avg_rating = 0, 
+    review_count = 0,     
+    avg_difficulty = 0,
+    retake_rate = 0
+} = Astro.props;
+
+// ... (helpers de rating se mantienen igual)
+const getRatingLabel = (rating: number) => { 
+    if (rating >= 4.5) return "Excelente";
+    if (rating >= 3.5) return "Bueno";
+    if (rating >= 2.5) return "Regular";
+    if (rating >= 1.5) return "Malo";
+    return "Pésimo";
+};
+const getRatingColor = (rating: number) => {
+    if (rating >= 4.5) return "text-green-600";
+    if (rating >= 3.5) return "text-green-400";
+    if (rating >= 2.5) return "text-yellow-500";
+    if (rating >= 1.5) return "text-orange-500";
+    return "text-red-600";
+};
+---
+
+<a
+    href={`/professor/${id}`}
+    class="professor-card group flex flex-col h-full bg-white rounded-xl border-2 border-gray-100 p-6 hover:border-blue-500 hover:shadow-xl transition-all cursor-pointer text-left"
+    data-name={name.toLowerCase()}
+    data-department={department.toLowerCase()}
+    
+    {/* IMPORTANTE: 
+        Al hacer el join aquí, 'data-courses' ahora contendrá algo como: 
+        "ma1031 - matemáticas tc2005 - programación".
+        Por eso el buscador encontrará "ma1031" automáticamente.
+    */}
+    data-courses={matching_courses.join(' ').toLowerCase()}
+>
+    {/* Header y Stats (Sin cambios) */}
+    <div class="flex items-start justify-between mb-4">
+        <div class="flex-1">
+            <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                    {name}
+                </h3>
+                {pending && (
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
+                    Revisión Pendiente
+                    </span>
+                )}
+            </div>
+            <p class="text-sm text-blue-600 mt-1">{department}</p>
+        </div>
+        <ArrowRight class="w-5 h-5 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+    </div>
+
+    <div class="grid grid-cols-3 gap-4 mb-4">
+        <div class="text-center">
+            <div class="flex items-center justify-center gap-1 mb-1">
+                <span class={`text-3xl font-bold ${getRatingColor(avg_rating)}`}>{avg_rating.toFixed(1)}</span>
+                <Star class="w-5 h-5 text-yellow-500 fill-yellow-500" />
+            </div>
+            <p class="text-xs text-gray-500">Calidad</p>
+        </div>
+        <div class="text-center border-x border-gray-200">
+            <div class="flex items-center justify-center gap-1 mb-1">
+                <span class="text-3xl font-bold text-gray-900">{avg_difficulty.toFixed(1)}</span>
+            </div>
+            <p class="text-xs text-gray-500">Dificultad</p>
+        </div>
+        <div class="text-center">
+            <div class="mb-1">
+                <span class="text-3xl font-bold text-gray-900">{retake_rate}%</span>
+            </div>
+            <p class="text-xs text-gray-500">Repetiría</p>
+        </div>
+    </div>
+
+    {/* Footer */}
+    <div class="pt-4 border-t border-gray-100 mt-auto">
+        
+        {/* Lógica de ocultar/mostrar cursos (Del paso anterior) */}
+        <div class="courses-container hidden mb-3">
+            {matching_courses.length > 0 && (
+                <>
+                    <p class="text-xs font-medium text-gray-500 mb-2">Imparte:</p>
+                    <div class="space-y-1">
+                        {matching_courses.slice(0, 2).map((course) => (
+                            <div class="flex items-center gap-2">
+                                <BookOpen class="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                                {/* AQUÍ SE IMPRIME EL STRING COMPLETO:
+                                    Ej: "MA1031 - Matemáticas"
+                                */}
+                                <p class="text-sm text-gray-700 truncate">{course}</p>
+                            </div>
+                        ))}
+                        {matching_courses.length > 2 && (
+                            <p class="text-xs text-gray-500 pl-5">
+                                +{matching_courses.length - 2} más
+                            </p>
+                        )}
+                    </div>
+                </>
+            )}
+        </div>
+
+        <div class="flex items-center justify-between text-sm">
+            <span class="text-gray-600">
+                <span class="font-medium text-blue-600">{review_count}</span> reseñas
+            </span>
+            <span class="text-blue-600 font-medium group-hover:underline">
+                Ver detalles
+            </span>
+        </div>
+    </div>
+</a>

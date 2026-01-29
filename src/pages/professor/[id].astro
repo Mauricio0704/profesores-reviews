@@ -1,0 +1,28 @@
+---
+import { supabaseServer } from "~/lib/supabase";
+import Layout from "../../layouts/Layout.astro";
+import BackButton from "~/components/BackButton.astro";
+const { id } = Astro.params;
+
+const { data: professor, error } = await supabaseServer
+    .from('professors')
+    .select('*, universities(slug)')
+    .eq('id', id)
+    .single();
+
+if (error || !professor) {
+    return Astro.redirect('/404');
+}
+
+const universitySlug = professor.universities?.slug;
+---
+
+<Layout>
+    <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <BackButton 
+            text="Volver a la Universidad" 
+            href={`/university/${universitySlug}`} 
+        />
+        <h1 class="text-3xl font-bold mb-6">Professor Details - ID: {id}</h1>
+    </main>
+</Layout>
