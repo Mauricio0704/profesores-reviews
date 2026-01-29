@@ -37,7 +37,7 @@ const universitiesStats = (data || []).map((u: any) => {
     const all_reviews = courses.flatMap((c: any) => c.reviews || []);
     const review_count = all_reviews.length;
 
-    const total_rating = all_reviews.reduce((sum: number, r: any) => sum + (r?.rating ?? 0), 0);
+    const total_rating = all_reviews.reduce((sum: number, r: any) => sum + (r?.quality ?? 0), 0);
     const avg_rating = review_count > 0 ? total_rating / review_count : 0;
 
     const all_professors = courses.flatMap((c: any) =>
@@ -70,37 +70,35 @@ const universities = universitiesStats;
 ---
 
 <Layout>
-	<body>
-		<div class="min-h-screen w-full bg-gradient-to-br from-indigo-50 via-blue-50 to-slate-50">
-			{/*Main Content*/}
-			<main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-				{/*Title*/}
-				<div class="text-center mb-12">
-					<h2 class="text-4xl font-bold text-gray-900 mb-3">
-						Selecciona Tu Universidad
-					</h2>
-					<p class="text-lg text-gray-600">
-						Escoge tu universidad para ver los profesores calificados.
-					</p>
-				</div>
-				{/*Search Bar*/}
-				<UniversitySearch />
+    <div class="min-h-screen w-full bg-gradient-to-br">
+        {/*Main Content*/}
+        <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            {/*Title*/}
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-900 mb-3">
+                    Selecciona Tu Universidad
+                </h2>
+                <p class="text-lg text-gray-600">
+                    Escoge tu universidad para ver los profesores calificados.
+                </p>
+            </div>
+            {/*Search Bar*/}
+            <UniversitySearch />
 
-				{/*College Cards Grid*/}
-				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-				{universities.map((uni: any) => (
-					<UniversityCard 
-					name={uni.name}
-					slug={uni.slug}
-					location="Monterrey, NL" 
-					avgRating={uni.avg_rating}         
-					professorCount={uni.professor_count}    
-					reviewCount={uni.review_count}       
-					departmentCount={uni.department_count}     
-					/>
-				))}
-				</div>
-			</main>
-		</div>
-	</body>
+            {/*College Cards Grid*/}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {universities.map((uni: any) => (
+                <UniversityCard 
+                name={uni.name}
+                slug={uni.slug}
+                location="Monterrey, NL" 
+                avgRating={uni.avg_rating}         
+                professorCount={uni.professor_count}    
+                reviewCount={uni.review_count}       
+                departmentCount={uni.department_count}     
+                />
+            ))}
+            </div>
+        </main>
+    </div>
 </Layout>

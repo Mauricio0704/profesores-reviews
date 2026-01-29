@@ -1,0 +1,35 @@
+---
+interface Props {
+    text?: string;
+    href?: string;
+}
+
+const {
+    text = "Volver",
+    href
+} = Astro.props;
+
+const Element = href ? 'a' : 'button';
+---
+
+<Element
+    href={href}
+    id={!href ? "back-button-action" : undefined} 
+    class="flex items-center gap-2 text-gray-600 hover:text-blue-600 mb-8 group cursor-pointer w-fit"
+>
+    <svg class="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+    </svg>
+    <span class="font-medium">{text}</span>
+</Element>
+
+<script>
+    const btn = document.getElementById('back-button-action');
+    
+    if (btn) {
+        btn.addEventListener('click', () => {
+            window.dispatchEvent(new CustomEvent('resetFilters'));
+            console.log('Reset filters triggered');
+        });
+    }
+</script>

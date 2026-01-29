@@ -1,32 +1,231 @@
 ---
 import Layout from "../../layouts/Layout.astro";
+import BackButton from "../../components/BackButton.astro";
+import ProfessorSearch from "../../components/ProfessorSearch.astro";
+import ProfessorCard from "../../components/ProfessorCard.astro";
+import SuggestProfessorModal from "~/components/SuggestProfessorModal.astro";
 import { supabaseServer } from "../../lib/supabase";
+import { Star, UserPlus } from '@lucide/astro';
 
 const { slug } = Astro.params;
 
 const { data: university, error } = await supabaseServer
   .from("universities")
-  .select("*")
+  .select(`
+    id, name, slug,
+    courses (
+        id, name, code,
+        reviews (quality, difficulty, would_recommend),
+        professor_course_campus (
+            professors (id, name, department)
+        )
+    )
+  `)
   .eq("slug", slug)
   .single();
 
 if (error || !university) {
   return Astro.redirect('/404');
 }
+
+const professorsMap = new Map();
+
+university.courses.forEach((course: any) => {
+    const profsInCourse = course.professor_course_campus?.flatMap((pcc: any) => pcc.professors) || [];
+    const courseReviews = course.reviews || [];
+
+    profsInCourse.forEach((prof: any) => {
+        if (!prof) return;
+        if (!professorsMap.has(prof.id)) {
+            professorsMap.set(prof.id, {
+                id: prof.id,
+                name: prof.name,
+                department: prof.department,
+                courses: new Set(),
+                totalQuality: 0,
+                totalDifficulty: 0,
+                totalRetake: 0,
+                reviewCount: 0
+            });
+        }
+        const stats = professorsMap.get(prof.id);
+        stats.courses.add(`${course.code} - ${course.name}`);
+        courseReviews.forEach((review: any) => {
+            stats.totalQuality += review.quality || 0;
+            stats.totalDifficulty += review.difficulty || 0;
+            stats.totalRetake += review.would_take_again ? 1 : 0;
+            stats.reviewCount++;
+        });
+    });
+});
+
+const professors = Array.from(professorsMap.values()).map((p: any) => ({
+    id: p.id,
+    name: p.name,
+    department: p.department,
+    courses: Array.from(p.courses),
+    avg_rating: p.reviewCount > 0 ? p.totalQuality / p.reviewCount : 0,
+    avg_difficulty: p.reviewCount > 0 ? p.totalDifficulty / p.reviewCount : 0,
+    retake_rate: p.reviewCount > 0 ? Math.round((p.totalRetake / p.reviewCount) * 100) : 0,
+    review_count: p.reviewCount
+}));
+
+const totalProfessors = professors.length;
 ---
 
-<Layout
-    subtitle={university.name} 
->   
-    <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 text-center">
-             <h1 class="text-3xl font-bold text-gray-900 mb-4">
-                Bienvenido a {university.name}
-            </h1>
-            <p class="text-gray-600">
-                Aquí cargaremos la lista de profesores pronto.
-            </p>
-        </div>
+<Layout subtitle={university.name}>
+  <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      
+      {/* Botón Volver */}
+      <div class="mb-6">
+        <BackButton text="Ver otras universidades" href="/" />
+      </div>
+
+      {/* Título */}
+      <div class="mb-8 text-center">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Profesores de {university.name}</h1>
+        <p class="text-gray-600">Encuentra y califica a tus profesores</p>
+      </div>
+
+      {/* Buscador */}
+      <div class="bg-white rounded-2xl border border-gray-200 p-6 mb-8 shadow-sm">
+          <ProfessorSearch placeholder="Buscar profesores por nombre, departamento o curso..." />
+      </div>
+
+      {/*Results Header */}
+      <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900">
+          Todos los Profesores
+        </h2>
+        {/* Agregamos un ID 'results-count' para actualizarlo con JS */}
+        <p id="results-count" class="text-sm text-blue-600 font-medium mt-1">
+          {totalProfessors} {totalProfessors === 1 ? 'profesor' : 'profesores'} encontrados
+        </p>
+      </div>
+
+      {/* Botón Suggest */}
+      <button
+        id="suggest-btn"
+        class="inline-flex items-center px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors cursor-pointer"
+      >
+        <UserPlus class="w-5 h-5 mr-2" />
+        Sugerir Profesor
+      </button>
     </div>
 
+      {/* CONTENEDOR PRINCIPAL */}
+      <div id="professors-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {professors.map((prof: any) => (
+            <ProfessorCard 
+                id={prof.id}
+                name={prof.name} 
+                department={prof.department} 
+                avg_rating={prof.avg_rating} 
+                avg_difficulty={prof.avg_difficulty} 
+                retake_rate={prof.retake_rate} 
+                review_count={prof.review_count}
+                matching_courses={prof.courses} 
+            />
+        ))}
+      </div>
+
+      <div id="no-results-message" class="hidden text-center py-16 bg-white rounded-2xl border-2 border-dashed border-gray-200">
+        <Star class="w-16 h-16 text-gray-300 mx-auto mb-4" />
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">No se encontraron profesores</h3>
+        <p class="text-gray-500 mb-6">
+            Intenta ajustar tus criterios de búsqueda o borrar los filtros aplicados.
+        </p>
+        <button
+            id="clear-filters-btn"
+            class="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors cursor-pointer"
+        >
+            Borrar filtros
+        </button>
+      </div>
+
+      {professors.length === 0 && (
+         <div class="text-center py-16 bg-white rounded-2xl border-2 border-dashed border-gray-200">
+            <p class="text-gray-500 text-lg">Aún no hay datos cargados para esta universidad.</p>
+         </div>
+      )}
+      <SuggestProfessorModal universityId={university.id}/>
+  </main>
 </Layout>
+
+<script>
+  document.addEventListener('search-professors', ((e: CustomEvent) => {
+    const query = e.detail.toLowerCase().trim();
+    const cards = document.querySelectorAll('.professor-card');
+    const noResults = document.getElementById('no-results-message');
+    const grid = document.getElementById('professors-grid');
+    
+    let visibleCount = 0;
+
+    cards.forEach((card) => {
+      const element = card as HTMLElement;
+      const coursesContainer = element.querySelector('.courses-container');
+
+      const name = element.dataset.name || '';
+      const dept = element.dataset.department || '';
+      const courses = element.dataset.courses || '';
+
+      const matchesName = name.includes(query);
+      const matchesDept = dept.includes(query);
+      const matchesCourses = courses.includes(query);
+
+      if (matchesName || matchesDept || matchesCourses) {
+        element.style.display = '';
+        visibleCount++;
+
+        if (coursesContainer) {
+            if (query.length > 0 && matchesCourses) {
+                coursesContainer.classList.remove('hidden');
+            } else {
+                coursesContainer.classList.add('hidden');
+            }
+        }
+
+      } else {
+        element.style.display = 'none';
+      }
+    });
+
+    const countElement = document.getElementById('results-count');
+    if (countElement) {
+        const professorText = visibleCount === 1 ? 'profesor' : 'profesores';
+        const foundText = visibleCount === 1 ? 'encontrado' : 'encontrados';
+        countElement.textContent = `${visibleCount} ${professorText} ${foundText}`;
+    }
+
+    if (visibleCount === 0 && cards.length > 0) {
+        if(noResults) noResults.classList.remove('hidden');
+        if(grid) grid.classList.add('hidden');
+    } else {
+        if(noResults) noResults.classList.add('hidden');
+        if(grid) grid.classList.remove('hidden');
+    }
+
+  }) as EventListener);
+
+  const suggestBtn = document.getElementById('suggest-btn');
+  const modal = document.getElementById('suggest-modal');
+  if (suggestBtn && modal) {
+      suggestBtn.addEventListener('click', () => {
+          modal.classList.remove('hidden');
+      });
+  }
+
+  const clearBtn = document.getElementById('clear-filters-btn');
+  if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        const input = document.getElementById('professor-search') as HTMLInputElement;
+        if(input) {
+            input.value = '';
+            input.focus();
+        }
+
+        document.dispatchEvent(new CustomEvent('search-professors', { detail: '' }));
+      });
+  }
+</script>
