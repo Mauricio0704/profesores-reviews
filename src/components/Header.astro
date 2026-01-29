@@ -10,6 +10,10 @@ const {
   title = "Rate My Professor", 
   subtitle = "Encuentra a los mejores profesores en tu universidad" 
 } = Astro.props;
+
+const accessToken = Astro.cookies.get("sb-access-token");
+const refreshToken = Astro.cookies.get("sb-refresh-token");
+const isSignedIn = !!(accessToken && refreshToken);
 ---
 
 <header class="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50 shadow-sm">
@@ -32,9 +36,17 @@ const {
       </a>
 
       {/* Login/Signin Button */}
-      <a href="/auth" class="px-4 sm:px-6 py-2 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors text-sm sm:text-base">
-        Iniciar Sesión
-      </a>
+      {isSignedIn ? (
+        <form action="/api/auth/signout" class="m-0">
+          <button type="submit" class="px-4 sm:px-6 py-2 sm:py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors text-sm sm:text-base">
+            Cerrar Sesión
+          </button>
+        </form>
+      ) : (
+        <a href="/signin" class="px-4 sm:px-6 py-2 sm:py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors text-sm sm:text-base">
+          Iniciar Sesión
+        </a>
+      )}
 
     </div>
   </div>

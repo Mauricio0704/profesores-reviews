@@ -1,0 +1,63 @@
+---
+interface Props {
+  professorId: string;
+  courses?: Array<{ id: string; name: string }>;
+}
+
+const { professorId, courses = [] } = Astro.props as Props;
+---
+
+<div class="w-full max-w-xl">
+  <form action="/api/reviews" method="post" class="flex flex-col gap-3">
+    <input type="hidden" name="professor_id" value={professorId} />
+
+    {courses.length > 0 ? (
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1" for="course_id">Curso (opcional)</label>
+        <select name="course_id" id="course_id" class="w-full p-2.5 border border-gray-200 rounded-lg">
+          <option value="">Seleccionar (opcional)</option>
+          {courses.map((c) => (
+            <option value={c.id}>{c.name}</option>
+          ))}
+        </select>
+      </div>
+    ) : null}
+
+    <div>
+      <label class="block text-sm font-semibold text-slate-700 mb-1" for="quality">Calidad</label>
+      <select name="quality" id="quality" class="w-full p-2.5 border border-gray-200 rounded-lg" required>
+        <option value="5">5 — Excelente</option>
+        <option value="4">4 — Muy buena</option>
+        <option value="3">3 — Buena</option>
+        <option value="2">2 — Regular</option>
+        <option value="1">1 — Mala</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold text-slate-700 mb-1" for="difficulty">Dificultad</label>
+      <select name="difficulty" id="difficulty" class="w-full p-2.5 border border-gray-200 rounded-lg" required>
+        <option value="5">5 — Muy difícil</option>
+        <option value="4">4 — Difícil</option>
+        <option value="3">3 — Moderada</option>
+        <option value="2">2 — Fácil</option>
+        <option value="1">1 — Muy fácil</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-sm font-semibold text-slate-700 mb-1" for="comment">Comentario (opcional)</label>
+      <textarea name="comment" id="comment" rows="4" class="w-full p-2.5 border border-gray-200 rounded-lg" placeholder="Comparte tu experiencia (opcional)"></textarea>
+    </div>
+
+    <label class="inline-flex items-center gap-2 mt-1">
+      <input type="checkbox" name="would_recommend" value="true" class="h-4 w-4" />
+      <span class="text-sm text-slate-700">Lo recomendaría</span>
+    </label>
+
+    <div class="flex items-center gap-3 mt-2">
+      <button type="submit" class="py-2.5 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold">Enviar review</button>
+      <button type="reset" class="py-2 px-3 bg-gray-100 hover:bg-gray-200 rounded-lg">Limpiar</button>
+    </div>
+  </form>
+</div>
