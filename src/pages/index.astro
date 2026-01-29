@@ -15,7 +15,7 @@ const { data, error } = await supabaseServer
             reviews (
                 quality
             ),
-            professor_course_campus (
+            professor_course_university (
                 professors (
                     id,
                     department
@@ -38,7 +38,7 @@ const universitiesStats = (data || []).map((u: any) => {
     const avg_rating = review_count > 0 ? total_rating / review_count : 0;
 
     const all_professors = courses.flatMap((c: any) =>
-        (c.professor_course_campus || []).flatMap((pcc: any) => {
+        (c.professor_course_university || []).flatMap((pcc: any) => {
             const profs = pcc?.professors;
             if (!profs) return [];
             return Array.isArray(profs) ? profs : [profs];

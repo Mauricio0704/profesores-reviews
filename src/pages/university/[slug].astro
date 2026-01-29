@@ -15,7 +15,7 @@ const { data: university, error } = await supabaseServer
     id, name, slug,
     courses (
         id, name, code,
-        professor_course_campus (
+        professor_course_university (
           professors (id, name, department, reviews (quality, difficulty, would_recommend, course_id))
         )
     )
@@ -33,7 +33,7 @@ const courseIds = new Set(university.courses.map((c: any) => c.id));
 
 // Collect unique professors and the courses they teach at this university
 university.courses.forEach((course: any) => {
-  const profsInCourse = course.professor_course_campus?.flatMap((pcc: any) => pcc.professors) || [];
+  const profsInCourse = course.professor_course_university?.flatMap((pcc: any) => pcc.professors) || [];
 
   profsInCourse.forEach((prof: any) => {
     if (!prof) return;
