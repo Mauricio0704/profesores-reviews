@@ -2,16 +2,21 @@
 import { supabaseServer } from "~/lib/supabase";
 import Layout from "../../layouts/Layout.astro";
 import BackButton from "~/components/BackButton.astro";
+import ReviewForm from "~/components/ReviewForm.astro";
 const { id } = Astro.params;
 
+if (!id) {
+    return Astro.redirect('/404');
+}
+
 const { data: professor, error } = await supabaseServer
-    .from('professors')
-    .select('*, universities(slug)')
-    .eq('id', id)
-    .single();
+        .from('professors')
+        .select('*, universities(slug)')
+        .eq('id', id)
+        .single();
 
 if (error || !professor) {
-    return Astro.redirect('/404');
+        return Astro.redirect('/404');
 }
 
 const universitySlug = professor.universities?.slug;
@@ -23,6 +28,28 @@ const universitySlug = professor.universities?.slug;
             text="Volver a la Universidad" 
             href={`/university/${universitySlug}`} 
         />
-        <h1 class="text-3xl font-bold mb-6">Professor Details - ID: {id}</h1>
+            <h1 class="text-3xl font-bold mb-6">Professor Details - ID: {id}</h1>
+
+                        <details class="mb-6">
+                                <summary onclick="handleOpenReview(event)" class="cursor-pointer inline-block px-3 py-2 bg-purple-600 text-white rounded-md">Añadir review</summary>
+                                <div class="mt-4">
+                                        <ReviewForm professorId={id} />
+                                </div>
+                        </details>
     </main>
 </Layout>
+
+<script>
+    function hasAuthCookies() {
+        return document.cookie.includes('sb-access-token=') && document.cookie.includes('sb-refresh-token=');
+    }
+
+    function handleOpenReview(event: { preventDefault: () => void; }) {
+        if (!hasAuthCookies()) {
+            event.preventDefault();
+            // redirect to signin so user can authenticate before posting a review
+            window.location.href = '/signin';
+        }
+        // if cookies exist, allow the details element to open and show the form
+    }
+</script>
