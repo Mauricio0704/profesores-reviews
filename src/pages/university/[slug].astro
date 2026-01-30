@@ -3,7 +3,7 @@ import Layout from "../../layouts/Layout.astro";
 import BackButton from "../../components/BackButton.astro";
 import ProfessorSearch from "../../components/ProfessorSearch.astro";
 import ProfessorCard from "../../components/ProfessorCard.astro";
-import SuggestProfessorModal from "~/components/SuggestProfessorModal.astro";
+import AddProfessorModal from "~/components/AddProfessorModal.astro";
 import { supabaseServer } from "../../lib/supabase";
 import { Star, UserPlus } from '@lucide/astro';
 
@@ -16,7 +16,7 @@ const { data: university, error } = await supabaseServer
     professors (
         id, name, department,
         reviews (quality, difficulty, would_recommend, course_id),
-        professor_course_university (
+        professor_courses (    
             courses (code, name)
         )
     )
@@ -29,11 +29,17 @@ if (error || !university) {
 }
 
 const professors = (university.professors || []).map((prof: any) => {
-    const courses = prof.professor_course_university
-        ?.flatMap((pcu: any) => pcu.courses ? [`${pcu.courses.code} - ${pcu.courses.name}`] : [])
-        .filter(Boolean) || [];
 
-    const uniqueCourses = [...new Set(courses)];
+    const coursesRaw = prof.professor_courses || [];
+    
+    const coursesList = coursesRaw.map((item: any) => {
+        if (item.courses) {
+            return `${item.courses.code} - ${item.courses.name}`;
+        }
+        return null;
+    }).filter(Boolean);
+
+    const uniqueCourses = [...new Set(coursesList)];
 
     const reviews = prof.reviews || [];
     const count = reviews.length;
@@ -93,7 +99,7 @@ const totalProfessors = professors.length;
         class="inline-flex items-center px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors cursor-pointer"
       >
         <UserPlus class="w-5 h-5 mr-2" />
-        Sugerir Profesor
+        Añadir Profesor
       </button>
     </div>
 
@@ -134,7 +140,7 @@ const totalProfessors = professors.length;
       )}
 
       {/* Suggest Professor Modal */}
-      <SuggestProfessorModal universityId={university.id}/>
+      <AddProfessorModal universityId={university.id}/>
   </main>
 </Layout>
 
