@@ -41,6 +41,13 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     return redirect("/signin");
   }
 
+  const userId = session.data.session?.user?.id;
+  if (!userId) {
+    cookies.delete("sb-access-token", { path: "/" });
+    cookies.delete("sb-refresh-token", { path: "/" });
+    return redirect("/signin");
+  }
+
   let resolvedCourseId = course_id || null;
 
   if (!resolvedCourseId && new_course_code && new_course_name) {
@@ -70,6 +77,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   // Insert review using server client (service role) to avoid relying on anon key
   const { error } = await supabaseServer.from("reviews").insert([
     {
+      user_id: userId,
       professor_id,
       course_id: resolvedCourseId,
       comment,
