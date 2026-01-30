@@ -44,7 +44,7 @@ const departments = [
 
     {/* Scrollable Content */}
     <div class="overflow-y-auto p-6 space-y-5">
-        <form id="suggest-form" class="space-y-5">
+        <form id="add-form" class="space-y-5">
             <input type="hidden" name="university_id" id="university-id-input" value={universityId} />
 
             {/* Context Note */}
@@ -153,10 +153,10 @@ const departments = [
 </div>
 
 <script>
-  const modal = document.getElementById('suggest-modal');
+  const modal = document.getElementById('add-modal');
   const closeBtn = document.getElementById('close-modal-btn');
   const cancelBtn = document.getElementById('cancel-modal-btn');
-  const form = document.getElementById('suggest-form') as HTMLFormElement;
+  const form = document.getElementById('add-form') as HTMLFormElement;
   const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
 
   const courseCodeInput = document.getElementById('courseCode') as HTMLInputElement;
