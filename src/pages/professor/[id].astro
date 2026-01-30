@@ -10,16 +10,33 @@ if (!id) {
 }
 
 const { data: professor, error } = await supabaseServer
-        .from('professors')
-        .select('*, universities(slug)')
-        .eq('id', id)
-        .single();
+    .from('professors')
+    .select('*, universities(id, slug)')
+    .eq('id', id)
+    .single();
 
 if (error || !professor) {
         return Astro.redirect('/404');
 }
 
 const universitySlug = professor.universities?.slug;
+const universityId = professor.universities?.id;
+
+const { data: courses, error: coursesError } = await supabaseServer
+    .from('courses')
+    .select('id, name, code')
+    .eq('university_id', universityId)
+    .order('name', { ascending: true });
+
+const universityCourses = coursesError ? [] : (courses ?? []);
+
+const { data: reviews, error: reviewsError } = await supabaseServer
+    .from('reviews')
+    .select('id, professor_id, course_id, comment, created_at, difficulty, quality, would_recommend, courses(name, code)')
+    .eq('professor_id', id)
+    .order('created_at', { ascending: false });
+
+const professorReviews = reviewsError ? [] : (reviews ?? []);
 ---
 
 <Layout>
@@ -33,9 +50,33 @@ const universitySlug = professor.universities?.slug;
                         <details class="mb-6">
                                 <summary onclick="handleOpenReview(event)" class="cursor-pointer inline-block px-3 py-2 bg-purple-600 text-white rounded-md">Añadir review</summary>
                                 <div class="mt-4">
-                                        <ReviewForm professorId={id} />
+                                        <ReviewForm professorId={id} universityId={universityId} courses={universityCourses} />
                                 </div>
                         </details>
+
+                        <section class="mt-8">
+                            <h2 class="text-2xl font-semibold mb-4">Reviews</h2>
+                            {professorReviews.length === 0 ? (
+                                <p class="text-gray-600">Aún no hay reviews para este profesor.</p>
+                            ) : (
+                                <ul class="space-y-4">
+                                    {professorReviews.map((review) => (
+                                        <li class="border border-gray-200 rounded-lg p-4" key={review.id}>
+                                            <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-2">
+                                                <span>
+                                                    Curso: {review.courses ? `${review.courses.code} - ${review.courses.name}` : (review.course_id ?? 'N/A')}
+                                                </span>
+                                                <span>Dificultad: {review.difficulty}</span>
+                                                <span>Calidad: {review.quality}</span>
+                                                <span>Recomendaría: {review.would_recommend ? 'Sí' : 'No'}</span>
+                                                <span>{new Date(review.created_at).toLocaleDateString()}</span>
+                                            </div>
+                                            <p class="text-gray-800">{review.comment}</p>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </section>
     </main>
 </Layout>
 
