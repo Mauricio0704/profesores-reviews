@@ -91,6 +91,34 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     return new Response(error.message, { status: 500 });
   }
 
+  if (resolvedCourseId) {
+    const { data: existingLink, error: linkCheckError } = await supabaseServer
+      .from("professor_courses")
+      .select("professor_id")
+      .eq("professor_id", professor_id)
+      .eq("course_id", resolvedCourseId)
+      .maybeSingle();
+
+    if (linkCheckError) {
+      return new Response(linkCheckError.message, { status: 500 });
+    }
+
+    if (!existingLink) {
+      const { error: linkInsertError } = await supabaseServer
+        .from("professor_courses")
+        .insert([
+          {
+            professor_id,
+            course_id: resolvedCourseId,
+          },
+        ]);
+
+      if (linkInsertError) {
+        return new Response(linkInsertError.message, { status: 500 });
+      }
+    }
+  }
+
   // Redirect back to professor page
   return redirect(`/professor/${professor_id}`);
 };
