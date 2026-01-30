@@ -47,7 +47,7 @@ const getRatingColor = (rating: number) => {
     class="professor-card group flex flex-col h-full bg-white rounded-xl border-2 border-gray-100 p-6 hover:border-blue-500 hover:shadow-xl transition-all cursor-pointer text-left"
     data-name={name.toLowerCase()}
     data-department={department.toLowerCase()}
-    
+
     data-courses={matching_courses.join(' ').toLowerCase()}
 >
     {/* Header y Stats (Sin cambios) */}
@@ -101,7 +101,7 @@ const getRatingColor = (rating: number) => {
                     <div class="space-y-1">
                         {matching_courses.slice(0, 2).map((course) => (
                             <div class="flex items-center gap-2">
-                                <BookOpen class="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                                <BookOpen class="w-3.5 h-3.5 text-green-600 shrink-0" />
                                 <p class="text-sm text-gray-700 truncate">{course}</p>
                             </div>
                         ))}

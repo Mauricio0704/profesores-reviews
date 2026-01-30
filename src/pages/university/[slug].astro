@@ -11,16 +11,7 @@ const { slug } = Astro.params;
 
 const { data: university, error } = await supabaseServer
   .from("universities")
-  .select(`
-    id, name, slug,
-    professors (
-        id, name, department,
-        reviews (quality, difficulty, would_recommend, course_id),
-        professor_courses (    
-            courses (code, name)
-        )
-    )
-  `)
+  .select("id, name, slug")
   .eq("slug", slug)
   .single();
 
@@ -28,39 +19,18 @@ if (error || !university) {
   return Astro.redirect('/404');
 }
 
-const professors = (university.professors || []).map((prof: any) => {
+const { data: professors, error: professorsError } = await supabaseServer
+  .from("university_professor_stats")
+  .select("id, name, department, avg_rating, avg_difficulty, retake_rate, review_count, matching_courses")
+  .eq("university_slug", slug)
+  .order("review_count", { ascending: false })
+  .order("name", { ascending: true });
 
-    const coursesRaw = prof.professor_courses || [];
-    
-    const coursesList = coursesRaw.map((item: any) => {
-        if (item.courses) {
-            return `${item.courses.code} - ${item.courses.name}`;
-        }
-        return null;
-    }).filter(Boolean);
+if (professorsError) {
+  console.error("Error de Supabase:", professorsError.message);
+}
 
-    const uniqueCourses = [...new Set(coursesList)];
-
-    const reviews = prof.reviews || [];
-    const count = reviews.length;
-
-    const totalQuality = reviews.reduce((sum: number, r: any) => sum + (r.quality || 0), 0);
-    const totalDifficulty = reviews.reduce((sum: number, r: any) => sum + (r.difficulty || 0), 0);
-    const totalRetake = reviews.reduce((sum: number, r: any) => sum + (r.would_recommend ? 1 : 0), 0);
-
-    return {
-        id: prof.id,
-        name: prof.name,
-        department: prof.department,
-        courses: uniqueCourses,
-        avg_rating: count > 0 ? totalQuality / count : 0,
-        avg_difficulty: count > 0 ? totalDifficulty / count : 0,
-        retake_rate: count > 0 ? Math.round((totalRetake / count) * 100) : 0,
-        review_count: count
-    };
-});
-
-const totalProfessors = professors.length;
+const totalProfessors = (professors || []).length;
 ---
 
 <Layout subtitle={university.name}>
@@ -104,8 +74,11 @@ const totalProfessors = professors.length;
     </div>
 
       {/* CONTENEDOR PRINCIPAL */}
-      <div id="professors-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {professors.map((prof: any) => (
+      <div
+        id="professors-grid"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      >
+        {(professors || []).map((prof: any) => (
             <ProfessorCard 
                 id={prof.id}
                 name={prof.name} 
@@ -114,7 +87,7 @@ const totalProfessors = professors.length;
                 avg_difficulty={prof.avg_difficulty} 
                 retake_rate={prof.retake_rate} 
                 review_count={prof.review_count}
-                matching_courses={prof.courses} 
+                matching_courses={prof.matching_courses} 
             />
         ))}
       </div>
@@ -133,7 +106,7 @@ const totalProfessors = professors.length;
         </button>
       </div>
 
-      {professors.length === 0 && (
+      {(professors || []).length === 0 && (
          <div class="text-center py-16 bg-white rounded-2xl border-2 border-dashed border-gray-200">
             <p class="text-gray-500 text-lg">Aún no hay datos cargados para esta universidad.</p>
          </div>
@@ -219,4 +192,5 @@ const totalProfessors = professors.length;
         document.dispatchEvent(new CustomEvent('search-professors', { detail: '' }));
       });
   }
+
 </script>

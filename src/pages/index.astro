@@ -5,57 +5,19 @@ import UniversitySearch from '~/components/UniversitySearch.astro';
 import { supabaseServer } from '../lib/supabase';
 
 const { data, error } = await supabaseServer
-    .from('universities')
-    .select(`
-        id,
-        name,
-        slug,
-        professors (
-            id,
-            department,
-            reviews (
-                quality
-            )
-        )
-    `)
-    .order('name', { ascending: true });
+  .from('university_stats')
+  .select('id, name, slug, professor_count, review_count, avg_rating, department_count')
+  .order('name', { ascending: true });
 
 if (error) {
     console.error('Error de Supabase:', error.message);
 }
 
-const universitiesStats = (data || []).map((u: any) => {
-    const professors = u.professors || [];
-
-    const all_reviews = professors.flatMap((p: any) => p.reviews || []);
-    
-    const review_count = all_reviews.length;
-    const professor_count = professors.length;
-
-    const total_rating = all_reviews.reduce((sum: number, r: any) => sum + (r?.quality ?? 0), 0);
-    const avg_rating = review_count > 0 ? total_rating / review_count : 0;
-
-    const unique_departments = new Set(
-        professors
-            .filter((p: any) => p.department)
-            .map((p: any) => p.department.trim().toLowerCase())
-    );
-
-    return {
-        name: u.name,
-        slug: u.slug,
-        avg_rating,
-        review_count,
-        professor_count, 
-        department_count: unique_departments.size,
-    };
-});
-
-const universities = universitiesStats;
+const universities = data || [];
 ---
 
 <Layout>
-    <div class="min-h-screen w-full bg-gradient-to-br">
+    <div class="min-h-screen w-full bg-linear-to-br">
         {/*Main Content*/}
         <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             {/*Title*/}
