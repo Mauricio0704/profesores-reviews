@@ -10,16 +10,11 @@ const { data, error } = await supabaseServer
         id,
         name,
         slug,
-        courses (
+        professors (
             id,
+            department,
             reviews (
                 quality
-            ),
-            professor_course_university (
-                professors (
-                    id,
-                    department
-                )
             )
         )
     `)
@@ -30,25 +25,19 @@ if (error) {
 }
 
 const universitiesStats = (data || []).map((u: any) => {
-    const courses = u.courses || [];
-    const all_reviews = courses.flatMap((c: any) => c.reviews || []);
+    const professors = u.professors || [];
+
+    const all_reviews = professors.flatMap((p: any) => p.reviews || []);
+    
     const review_count = all_reviews.length;
+    const professor_count = professors.length;
 
     const total_rating = all_reviews.reduce((sum: number, r: any) => sum + (r?.quality ?? 0), 0);
     const avg_rating = review_count > 0 ? total_rating / review_count : 0;
 
-    const all_professors = courses.flatMap((c: any) =>
-        (c.professor_course_university || []).flatMap((pcc: any) => {
-            const profs = pcc?.professors;
-            if (!profs) return [];
-            return Array.isArray(profs) ? profs : [profs];
-        })
-    );
-
-    const unique_professors = new Set(all_professors.filter(Boolean).map((p: any) => p.id));
     const unique_departments = new Set(
-        all_professors
-            .filter((p: any) => p && p.department)
+        professors
+            .filter((p: any) => p.department)
             .map((p: any) => p.department.trim().toLowerCase())
     );
 
@@ -57,13 +46,12 @@ const universitiesStats = (data || []).map((u: any) => {
         slug: u.slug,
         avg_rating,
         review_count,
-        professor_count: unique_professors.size,
+        professor_count, 
         department_count: unique_departments.size,
     };
 });
 
 const universities = universitiesStats;
-
 ---
 
 <Layout>
@@ -86,13 +74,13 @@ const universities = universitiesStats;
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {universities.map((uni: any) => (
                 <UniversityCard 
-                name={uni.name}
-                slug={uni.slug}
-                location="Monterrey, NL" 
-                avgRating={uni.avg_rating}         
-                professorCount={uni.professor_count}    
-                reviewCount={uni.review_count}       
-                departmentCount={uni.department_count}     
+                    name={uni.name}
+                    slug={uni.slug}
+                    location="Monterrey, NL" 
+                    avgRating={uni.avg_rating}         
+                    professorCount={uni.professor_count}    
+                    reviewCount={uni.review_count}       
+                    departmentCount={uni.department_count}     
                 />
             ))}
             </div>

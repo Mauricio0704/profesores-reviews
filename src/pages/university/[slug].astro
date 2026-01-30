@@ -13,10 +13,11 @@ const { data: university, error } = await supabaseServer
   .from("universities")
   .select(`
     id, name, slug,
-    courses (
-        id, name, code,
+    professors (
+        id, name, department,
+        reviews (quality, difficulty, would_recommend, course_id),
         professor_course_university (
-          professors (id, name, department, reviews (quality, difficulty, would_recommend, course_id))
+            courses (code, name)
         )
     )
   `)
@@ -27,64 +28,31 @@ if (error || !university) {
   return Astro.redirect('/404');
 }
 
-const professorsMap = new Map();
-const professorRaw = new Map();
-const courseIds = new Set(university.courses.map((c: any) => c.id));
+const professors = (university.professors || []).map((prof: any) => {
+    const courses = prof.professor_course_university
+        ?.flatMap((pcu: any) => pcu.courses ? [`${pcu.courses.code} - ${pcu.courses.name}`] : [])
+        .filter(Boolean) || [];
 
-// Collect unique professors and the courses they teach at this university
-university.courses.forEach((course: any) => {
-  const profsInCourse = course.professor_course_university?.flatMap((pcc: any) => pcc.professors) || [];
+    const uniqueCourses = [...new Set(courses)];
 
-  profsInCourse.forEach((prof: any) => {
-    if (!prof) return;
-    if (!professorsMap.has(prof.id)) {
-      professorsMap.set(prof.id, {
+    const reviews = prof.reviews || [];
+    const count = reviews.length;
+
+    const totalQuality = reviews.reduce((sum: number, r: any) => sum + (r.quality || 0), 0);
+    const totalDifficulty = reviews.reduce((sum: number, r: any) => sum + (r.difficulty || 0), 0);
+    const totalRetake = reviews.reduce((sum: number, r: any) => sum + (r.would_recommend ? 1 : 0), 0);
+
+    return {
         id: prof.id,
         name: prof.name,
         department: prof.department,
-        courses: new Set(),
-        totalQuality: 0,
-        totalDifficulty: 0,
-        totalRetake: 0,
-        reviewCount: 0
-      });
-    }
-
-    // store a reference to the raw professor object (with their reviews)
-    if (!professorRaw.has(prof.id)) {
-      professorRaw.set(prof.id, prof);
-    }
-
-    const stats = professorsMap.get(prof.id);
-    stats.courses.add(`${course.code} - ${course.name}`);
-  });
+        courses: uniqueCourses,
+        avg_rating: count > 0 ? totalQuality / count : 0,
+        avg_difficulty: count > 0 ? totalDifficulty / count : 0,
+        retake_rate: count > 0 ? Math.round((totalRetake / count) * 100) : 0,
+        review_count: count
+    };
 });
-
-for (const [profId, prof] of professorRaw.entries()) {
-  const stats = professorsMap.get(profId);
-  const reviews = prof.reviews || [];
-
-  reviews.forEach((review: any) => {
-    // Only count reviews that are for courses belonging to this university
-    if (review.course_id && !courseIds.has(review.course_id)) return;
-
-    stats.totalQuality += review.quality || 0;
-    stats.totalDifficulty += review.difficulty || 0;
-    stats.totalRetake += review.would_recommend ? 1 : 0;
-    stats.reviewCount++;
-  });
-}
-
-const professors = Array.from(professorsMap.values()).map((p: any) => ({
-  id: p.id,
-  name: p.name,
-  department: p.department,
-  courses: Array.from(p.courses),
-  avg_rating: p.reviewCount > 0 ? p.totalQuality / p.reviewCount : 0,
-  avg_difficulty: p.reviewCount > 0 ? p.totalDifficulty / p.reviewCount : 0,
-  retake_rate: p.reviewCount > 0 ? Math.round((p.totalRetake / p.reviewCount) * 100) : 0,
-  review_count: p.reviewCount
-}));
 
 const totalProfessors = professors.length;
 ---
@@ -114,7 +82,6 @@ const totalProfessors = professors.length;
         <h2 class="text-xl font-semibold text-gray-900">
           Todos los Profesores
         </h2>
-        {/* Agregamos un ID 'results-count' para actualizarlo con JS */}
         <p id="results-count" class="text-sm text-blue-600 font-medium mt-1">
           {totalProfessors} {totalProfessors === 1 ? 'profesor' : 'profesores'} encontrados
         </p>
@@ -165,6 +132,8 @@ const totalProfessors = professors.length;
             <p class="text-gray-500 text-lg">Aún no hay datos cargados para esta universidad.</p>
          </div>
       )}
+
+      {/* Suggest Professor Modal */}
       <SuggestProfessorModal universityId={university.id}/>
   </main>
 </Layout>
