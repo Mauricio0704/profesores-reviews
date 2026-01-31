@@ -154,7 +154,12 @@ const totalProfessorsLabel = totalProfessors >= 1000 ? "+999" : String(totalProf
     const avg_difficulty = Number(prof.avg_difficulty ?? 0);
     const retake_rate = Number(prof.retake_rate ?? 0);
     const review_count = Number(prof.review_count ?? 0);
-    const courses = Array.isArray(prof.matching_courses) ? prof.matching_courses : [];
+    let courses = [];
+    if (Array.isArray(prof.matching_courses)) {
+        courses = prof.matching_courses;
+    } else if (typeof prof.matching_courses === 'string' && prof.matching_courses.trim() !== '') {
+        courses = prof.matching_courses.split(',').map((c: string) => c.trim());
+    }
 
     const getRatingColor = (rating: number) => {
       if (rating >= 4.5) return 'text-green-600';
