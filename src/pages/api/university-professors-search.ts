@@ -26,7 +26,7 @@ export const GET: APIRoute = async ({ url }) => {
 
   if (search) {
     const like = `%${search}%`;
-    query = query.or(`name.ilike.${like},department.ilike.${like}`);
+    query = query.or(`name.ilike.${like},department.ilike.${like},matching_courses.ilike.${like}`);
   }
 
   const { data, error } = await query;
