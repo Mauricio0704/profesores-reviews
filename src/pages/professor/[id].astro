@@ -1,8 +1,8 @@
 ---
 import { supabaseServer } from "~/lib/supabase";
 import Layout from "../../layouts/Layout.astro";
-import BackButton from "~/components/BackButton.astro";
 import ReviewForm from "~/components/ReviewForm.astro";
+import ProfessorDetails from "~/components/ProfessorDetails.astro";
 const { id } = Astro.params;
 
 if (!id) {
@@ -11,7 +11,7 @@ if (!id) {
 
 const { data: professor, error } = await supabaseServer
     .from('professors')
-    .select('*, universities(id, slug)')
+    .select('id, name, department, universities(id, slug)')
     .eq('id', id)
     .single();
 
@@ -37,46 +37,64 @@ const { data: reviews, error: reviewsError } = await supabaseServer
     .order('created_at', { ascending: false });
 
 const professorReviews = reviewsError ? [] : (reviews ?? []);
+
+const qualityValues = professorReviews
+    .map((review: any) => Number(review.quality))
+    .filter((value: number) => Number.isFinite(value));
+
+const difficultyValues = professorReviews
+    .map((review: any) => Number(review.difficulty))
+    .filter((value: number) => Number.isFinite(value));
+
+const average = (values: number[]) =>
+    values.length > 0 ? values.reduce((sum, v) => sum + v, 0) / values.length : 0;
+
+const overallRating = average(qualityValues);
+const difficultyRating = average(difficultyValues);
+const wouldTakeAgainPercentage = professorReviews.length
+    ? Math.round(
+            (professorReviews.filter((review: any) => !!review.would_recommend).length /
+                professorReviews.length) *
+                100
+        )
+    : 0;
+
+const reviewCards = professorReviews.map((review: any) => ({
+    id: review.id,
+    comment: review.comment,
+    created_at: review.created_at,
+    difficulty: review.difficulty,
+    quality: review.quality,
+    would_recommend: review.would_recommend,
+    course_code: review.courses?.code ?? null,
+    course_name: review.courses?.name ?? null,
+}));
 ---
 
 <Layout>
     <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <BackButton 
-            text="Volver a la Universidad" 
-            href={`/university/${universitySlug}`} 
+        <ProfessorDetails
+            professor={{
+                name: professor.name,
+                department: professor.department,
+                overallRating,
+                difficultyRating,
+                wouldTakeAgainPercentage,
+                totalReviews: professorReviews.length,
+            }}
+            reviews={reviewCards}
+            backHref={`/university/${universitySlug}`}
+            backText="Volver a la Universidad"
         />
-            <h1 class="text-3xl font-bold mb-6">Professor Details - ID: {id}</h1>
 
-                        <details class="mb-6">
-                                <summary onclick="handleOpenReview(event)" class="cursor-pointer inline-block px-3 py-2 bg-purple-600 text-white rounded-md">Añadir review</summary>
-                                <div class="mt-4">
-                                        <ReviewForm professorId={id} universityId={universityId} courses={universityCourses} />
-                                </div>
-                        </details>
-
-                        <section class="mt-8">
-                            <h2 class="text-2xl font-semibold mb-4">Reviews</h2>
-                            {professorReviews.length === 0 ? (
-                                <p class="text-gray-600">Aún no hay reviews para este profesor.</p>
-                            ) : (
-                                <ul class="space-y-4">
-                                    {professorReviews.map((review) => (
-                                        <li class="border border-gray-200 rounded-lg p-4" key={review.id}>
-                                            <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-2">
-                                                <span>
-                                                    Curso: {review.courses ? `${review.courses.code} - ${review.courses.name}` : (review.course_id ?? 'N/A')}
-                                                </span>
-                                                <span>Dificultad: {review.difficulty}</span>
-                                                <span>Calidad: {review.quality}</span>
-                                                <span>Recomendaría: {review.would_recommend ? 'Sí' : 'No'}</span>
-                                                <span>{new Date(review.created_at).toLocaleDateString()}</span>
-                                            </div>
-                                            <p class="text-gray-800">{review.comment}</p>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </section>
+        <details id="review-form-details" class="mt-10">
+            <summary onclick="handleOpenReview(event)" class="cursor-pointer inline-block px-3 py-2 bg-purple-600 text-white rounded-md">
+                Añadir review
+            </summary>
+            <div id="review-form" class="mt-4">
+                <ReviewForm professorId={id} universityId={universityId} courses={universityCourses} />
+            </div>
+        </details>
     </main>
 </Layout>
 
