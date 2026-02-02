@@ -1,0 +1,218 @@
+---
+import { ArrowLeft, Star, TrendingUp, BookOpen, BarChart3, Users, Plus } from '@lucide/astro';
+import BackButton from './BackButton.astro';
+import ReviewCard from './ReviewCard.astro';
+
+interface Professor {
+  name: string;
+  department?: string | null;
+  overallRating: number;
+  difficultyRating: number;
+  wouldTakeAgainPercentage: number;
+  totalReviews: number;
+}
+
+interface Review {
+  id: string | number;
+  comment?: string | null;
+  created_at?: string | null;
+  difficulty?: number | null;
+  quality?: number | null;
+  would_recommend?: boolean | null;
+  course_code?: string | null;
+  course_name?: string | null;
+}
+
+interface Props {
+  professor: Professor;
+  reviews?: Review[];
+  backHref?: string;
+  backText?: string;
+  addReviewHref?: string;
+  addReviewText?: string;
+}
+
+const {
+  professor,
+  reviews = [],
+  backHref,
+  backText = 'Volver a todos los profesores',
+  addReviewHref,
+  addReviewText = 'Añadir review',
+} = Astro.props as Props;
+
+const getRatingColor = (rating: number) => {
+  if (rating >= 4.0) return 'text-green-600';
+  if (rating >= 3.0) return 'text-yellow-600';
+  return 'text-red-600';
+};
+
+const overallRating = Number.isFinite(professor.overallRating) ? professor.overallRating : 0;
+const difficultyRating = Number.isFinite(professor.difficultyRating) ? professor.difficultyRating : 0;
+const totalReviews = Number.isFinite(professor.totalReviews) ? professor.totalReviews : reviews.length;
+const filledStars = Math.round(overallRating);
+---
+
+<div>
+  {/* Back Button */}
+  {backHref ? (
+    <BackButton text={backText} href={backHref} />
+  ) : (
+    <button
+      id="professor-back-btn"
+      class="flex items-center gap-2 text-gray-600 hover:text-blue-600 mb-8 group"
+      type="button"
+    >
+      <ArrowLeft class="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+      <span class="font-medium">{backText}</span>
+    </button>
+  )}
+
+  {/* Professor Header */}
+  <div class="bg-white rounded-2xl border border-gray-200 p-8 mb-8">
+    <div class="mb-6">
+      <h1 class="text-4xl font-bold text-gray-900 mb-2">{professor.name}</h1>
+      {professor.department ? (
+        <p class="text-lg text-blue-600 font-medium">{professor.department}</p>
+      ) : null}
+    </div>
+
+    {/* Key Stats */}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+      {/* Overall Rating */}
+      <div class="col-span-2 md:col-span-1">
+        <div class="bg-linear-to-br from-blue-50 to-indigo-50 rounded-xl p-6 text-center border border-blue-100">
+          <div class="flex items-center justify-center gap-2 mb-2">
+            <span class={`text-5xl font-bold ${getRatingColor(overallRating)}`}>
+              {overallRating.toFixed(1)}
+            </span>
+            <Star class="w-8 h-8 text-yellow-500 fill-yellow-500" />
+          </div>
+          <div class="flex items-center justify-center gap-1 mb-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star
+                class={`w-4 h-4 ${i < filledStars ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-200 text-gray-200'}`}
+              />
+            ))}
+          </div>
+          <p class="text-sm font-medium text-gray-600">Calidad general</p>
+        </div>
+      </div>
+
+      {/* Other Stats */}
+      <div class="bg-gray-50 rounded-xl p-6 text-center">
+        <div class="flex items-center justify-center mb-2">
+          <span class="text-4xl font-bold text-gray-900">
+            {difficultyRating.toFixed(1)}
+          </span>
+        </div>
+        <div class="flex items-center justify-center gap-1 mb-2">
+          <TrendingUp class="w-5 h-5 text-orange-500" />
+        </div>
+        <p class="text-sm font-medium text-gray-600">Dificultad</p>
+      </div>
+
+      <div class="bg-gray-50 rounded-xl p-6 text-center">
+        <div class="flex items-center justify-center mb-2">
+          <span class="text-4xl font-bold text-gray-900">
+            {professor.wouldTakeAgainPercentage}%
+          </span>
+        </div>
+        <div class="flex items-center justify-center gap-1 mb-2">
+          <BarChart3 class="w-5 h-5 text-gray-500" />
+        </div>
+        <p class="text-sm font-medium text-gray-600">Repetiría</p>
+      </div>
+
+      <div class="bg-gray-50 rounded-xl p-6 text-center">
+        <div class="flex items-center justify-center mb-2">
+          <span class="text-4xl font-bold text-indigo-600">
+            {totalReviews}
+          </span>
+        </div>
+        <div class="flex items-center justify-center gap-1 mb-2">
+          <Users class="w-5 h-5 text-indigo-500" />
+        </div>
+        <p class="text-sm font-medium text-gray-600">Reseñas</p>
+      </div>
+    </div>
+  </div>
+
+  {/* Reviews Section */}
+  <div>
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-2xl font-bold text-gray-900">Reseñas</h2>
+      <div class="flex items-center gap-4">
+        <span class="text-sm font-medium text-blue-600">
+          {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
+        </span>
+        {addReviewHref ? (
+          <a
+            href={addReviewHref}
+            class="flex items-center gap-2 bg-blue-600 text-white font-medium py-2.5 px-5 rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            <Plus class="w-5 h-5" />
+            {addReviewText}
+          </a>
+        ) : (
+          <button
+            type="button"
+            data-action="open-review"
+            class="flex items-center gap-2 bg-blue-600 text-white font-medium py-2.5 px-5 rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            <Plus class="w-5 h-5" />
+            {addReviewText}
+          </button>
+        )}
+      </div>
+    </div>
+    
+    {reviews.length > 0 ? (
+      <div class="space-y-4">
+        {reviews.map((review) => (
+          <ReviewCard review={review} />
+        ))}
+      </div>
+    ) : (
+      <div class="bg-white rounded-2xl border-2 border-dashed border-gray-200 p-16 text-center">
+        <BookOpen class="w-16 h-16 text-gray-300 mx-auto mb-4" />
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">Aún no hay reseñas</h3>
+        <p class="text-gray-500 mb-4">¡Sé el primero en calificar a este profesor!</p>
+        {addReviewHref ? (
+          <a
+            href={addReviewHref}
+            class="inline-flex items-center gap-2 bg-blue-600 text-white font-medium py-2.5 px-5 rounded-xl hover:bg-blue-700 transition-colors"
+          >
+            <Plus class="w-5 h-5" />
+            {addReviewText}
+          </a>
+        ) : (
+          <button
+            type="button"
+            data-action="open-review"
+            class="inline-flex items-center gap-2 bg-blue-600 text-white font-medium py-2.5 px-5 rounded-xl hover:bg-blue-700 transition-colors"
+          >
+            <Plus class="w-5 h-5" />
+            Escribir review
+          </button>
+        )}
+      </div>
+    )}
+  </div>
+</div>
+
+<script>
+  const backBtn = document.getElementById('professor-back-btn');
+  backBtn?.addEventListener('click', () => window.history.back());
+
+  const openReviewButtons = document.querySelectorAll('[data-action="open-review"]');
+  const reviewDetails = document.getElementById('review-form-details') as HTMLDetailsElement | null;
+  const reviewFormAnchor = document.getElementById('review-form');
+
+  openReviewButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (reviewDetails) reviewDetails.open = true;
+      if (reviewFormAnchor) reviewFormAnchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+</script>
