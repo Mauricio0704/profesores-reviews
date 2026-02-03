@@ -8,6 +8,8 @@ import { supabaseServer } from "../../lib/supabase";
 import { Star, UserPlus } from '@lucide/astro';
 
 const { slug } = Astro.params;
+const PAGE_SIZE = 12;
+const currentPage = Math.max(1, Number(Astro.url.searchParams.get("page") || 1));
 
 const { data: university, error } = await supabaseServer
   .from("universities")
@@ -19,18 +21,27 @@ if (error || !university) {
   return Astro.redirect('/404');
 }
 
-const { data: professors, error: professorsError } = await supabaseServer
+const rangeStart = (currentPage - 1) * PAGE_SIZE;
+const rangeEnd = rangeStart + PAGE_SIZE - 1;
+
+const { data: professors, error: professorsError, count } = await supabaseServer
   .from("university_professor_stats")
-  .select("id, name, department, avg_rating, avg_difficulty, retake_rate, review_count, matching_courses")
+  .select(
+    "id, name, department, avg_rating, avg_difficulty, retake_rate, review_count, matching_courses",
+    { count: "exact" }
+  )
   .eq("university_slug", slug)
   .order("review_count", { ascending: false })
-  .order("name", { ascending: true });
+  .order("name", { ascending: true })
+  .range(rangeStart, rangeEnd);
 
 if (professorsError) {
   console.error("Error de Supabase:", professorsError.message);
 }
 
-const totalProfessors = (professors || []).length;
+const totalProfessors = count ?? 0;
+const totalPages = Math.max(1, Math.ceil(totalProfessors / PAGE_SIZE));
+const safeCurrentPage = Math.min(currentPage, totalPages);
 const totalProfessorsLabel = totalProfessors >= 1000 ? "+999" : String(totalProfessors);
 ---
 
@@ -79,6 +90,9 @@ const totalProfessorsLabel = totalProfessors >= 1000 ? "+999" : String(totalProf
         id="professors-grid"
         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         data-total={totalProfessors}
+        data-page={safeCurrentPage}
+        data-page-size={PAGE_SIZE}
+        data-total-pages={totalPages}
         data-slug={slug}
       >
         {(professors || []).map((prof: any) => (
@@ -115,6 +129,40 @@ const totalProfessorsLabel = totalProfessors >= 1000 ? "+999" : String(totalProf
          </div>
       )}
 
+      {totalProfessors > PAGE_SIZE && (
+        <div id="pagination-controls" class="mt-10 flex items-center justify-center gap-4">
+          {safeCurrentPage > 1 ? (
+            <a
+              class="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
+              href={`${Astro.url.pathname}?page=${safeCurrentPage - 1}`}
+            >
+              Anterior
+            </a>
+          ) : (
+            <span class="px-4 py-2 rounded-lg border border-gray-200 text-gray-400 cursor-not-allowed">
+              Anterior
+            </span>
+          )}
+
+          <span class="text-sm text-gray-600">
+            Página {safeCurrentPage} de {totalPages}
+          </span>
+
+          {safeCurrentPage < totalPages ? (
+            <a
+              class="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
+              href={`${Astro.url.pathname}?page=${safeCurrentPage + 1}`}
+            >
+              Siguiente
+            </a>
+          ) : (
+            <span class="px-4 py-2 rounded-lg border border-gray-200 text-gray-400 cursor-not-allowed">
+              Siguiente
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Suggest Professor Modal */}
       <AddProfessorModal universityId={university.id}/>
   </main>
@@ -124,8 +172,13 @@ const totalProfessorsLabel = totalProfessors >= 1000 ? "+999" : String(totalProf
   const grid = document.getElementById('professors-grid');
   const noResults = document.getElementById('no-results-message');
   const countElement = document.getElementById('results-count');
+  const pagination = document.getElementById('pagination-controls');
   const originalHtml = grid?.innerHTML || '';
+  const originalPaginationHtml = pagination?.innerHTML || '';
   const originalTotal = Number(grid?.dataset.total || 0);
+  const pageSize = Number(grid?.dataset.pageSize || 12);
+  let currentSearchQuery = '';
+  let isSearching = false;
 
   const formatCountLabel = (count: number) => (count >= 1000 ? '+999' : String(count));
 
@@ -145,6 +198,46 @@ const totalProfessorsLabel = totalProfessors >= 1000 ? "+999" : String(totalProf
       noResults.classList.add('hidden');
       grid.classList.remove('hidden');
     }
+  };
+
+  const updatePaginationVisibility = (shouldShow: boolean) => {
+    if (!pagination) return;
+    if (shouldShow) {
+      pagination.classList.remove('hidden');
+    } else {
+      pagination.classList.add('hidden');
+    }
+  };
+
+  const renderSearchPagination = (total: number, page: number, totalPages: number) => {
+    if (!pagination) return;
+    if (total <= pageSize) {
+      updatePaginationVisibility(false);
+      return;
+    }
+
+    updatePaginationVisibility(true);
+
+    const prevDisabled = page <= 1;
+    const nextDisabled = page >= totalPages;
+
+    pagination.innerHTML = `
+      <button
+        class="px-4 py-2 rounded-lg border border-gray-200 ${prevDisabled ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-50'}"
+        data-page="${page - 1}"
+        ${prevDisabled ? 'disabled' : ''}
+      >
+        Anterior
+      </button>
+      <span class="text-sm text-gray-600">Página ${page} de ${totalPages}</span>
+      <button
+        class="px-4 py-2 rounded-lg border border-gray-200 ${nextDisabled ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-50'}"
+        data-page="${page + 1}"
+        ${nextDisabled ? 'disabled' : ''}
+      >
+        Siguiente
+      </button>
+    `;
   };
 
   const renderCard = (prof: any) => {
@@ -260,40 +353,17 @@ const totalProfessorsLabel = totalProfessors >= 1000 ? "+999" : String(totalProf
     return wrapper.firstElementChild;
   };
 
-  const runLocalFilter = (query: string) => {
-    const cards = document.querySelectorAll('.professor-card');
-    let visibleCount = 0;
-
-    cards.forEach((card) => {
-      const element = card as HTMLElement;
-
-      const name = element.dataset.name || '';
-      const dept = element.dataset.department || '';
-      const courses = element.dataset.courses || '';
-
-      const matchesName = name.includes(query);
-      const matchesDept = dept.includes(query);
-      const matchesCourses = courses.includes(query);
-
-      if (matchesName || matchesDept || matchesCourses) {
-        element.style.display = '';
-        visibleCount++;
-      } else {
-        element.style.display = 'none';
-      }
-    });
-
-    updateCountText(visibleCount);
-    updateVisibility(visibleCount);
-  };
-
-  const runServerSearch = async (query: string) => {
+  const runServerSearch = async (query: string, page = 1) => {
     if (!grid) return;
     const slugValue = grid.dataset.slug || '';
-    const res = await fetch(`/api/university-professors-search?slug=${encodeURIComponent(slugValue)}&search=${encodeURIComponent(query)}`);
+    const res = await fetch(`/api/university-professors-search?slug=${encodeURIComponent(slugValue)}&search=${encodeURIComponent(query)}&page=${page}&limit=${pageSize}`);
     if (!res.ok) return;
     const json = await res.json();
     const results = Array.isArray(json?.data) ? json.data : [];
+    const paginationInfo = json?.pagination || {};
+    const total = Number(paginationInfo.total || results.length);
+    const currentPage = Number(paginationInfo.page || page);
+    const totalPages = Number(paginationInfo.totalPages || 1);
 
     grid.innerHTML = '';
     results.forEach((prof: any) => {
@@ -301,8 +371,9 @@ const totalProfessorsLabel = totalProfessors >= 1000 ? "+999" : String(totalProf
       if (card) grid.appendChild(card);
     });
 
-    updateCountText(results.length);
+    updateCountText(total);
     updateVisibility(results.length);
+    renderSearchPagination(total, currentPage, totalPages);
   };
 
   document.addEventListener('search-professors', ((e: CustomEvent) => {
@@ -312,12 +383,29 @@ const totalProfessorsLabel = totalProfessors >= 1000 ? "+999" : String(totalProf
       if (grid) grid.innerHTML = originalHtml;
       updateCountText(originalTotal);
       updateVisibility(originalTotal);
-      runLocalFilter('');
+      if (pagination) pagination.innerHTML = originalPaginationHtml;
+      updatePaginationVisibility(originalTotal > pageSize);
+      isSearching = false;
+      currentSearchQuery = '';
       return;
     }
 
-    runServerSearch(query);
+    isSearching = true;
+    currentSearchQuery = query;
+    runServerSearch(query, 1);
   }) as EventListener);
+
+  if (pagination) {
+    pagination.addEventListener('click', (event) => {
+      if (!isSearching) return;
+      const target = event.target as HTMLElement;
+      const button = target.closest('button[data-page]') as HTMLButtonElement | null;
+      if (!button || button.disabled) return;
+      const page = Number(button.dataset.page || 1);
+      if (Number.isNaN(page) || page < 1) return;
+      runServerSearch(currentSearchQuery, page);
+    });
+  }
 
   const suggestBtn = document.getElementById('suggest-btn');
   const modal = document.getElementById('add-modal');

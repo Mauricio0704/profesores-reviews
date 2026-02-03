@@ -7,7 +7,7 @@ interface Props {
 }
 
 const { 
-  title = "Rate My Professor", 
+  title = "Califica Mi Profe", 
   subtitle = "Encuentra a los mejores profesores en tu universidad" 
 } = Astro.props;
 
@@ -22,7 +22,7 @@ const isSignedIn = !!(accessToken && refreshToken);
       
       {/* Logo y Textos */}
       <a href="/" class="flex items-center gap-3 sm:gap-4 group hover:opacity-90 transition-all duration-200 min-w-0 transform group-hover:scale-105">
-        <div class="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl sm:rounded-2xl p-2 sm:p-2.5 shadow-md flex-shrink-0 transition-transform">
+        <div class="bg-linear-to-br from-blue-600 to-indigo-600 rounded-xl sm:rounded-2xl p-2 sm:p-2.5 shadow-md shrink-0 transition-transform">
           <GraduationCap class="w-5 h-5 sm:w-7 sm:h-7 text-white" />
         </div>
         <div class="min-w-0">
