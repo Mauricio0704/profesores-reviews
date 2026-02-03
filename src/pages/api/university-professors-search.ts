@@ -20,7 +20,7 @@ export const GET: APIRoute = async ({ url }) => {
   }
 
   let query = supabaseServer
-    .from("university_professor_stats")
+    .from("university_professor_stats_search")
     .select(
       "id, name, department, avg_rating, avg_difficulty, retake_rate, review_count, matching_courses",
       { count: "exact" }
@@ -32,8 +32,9 @@ export const GET: APIRoute = async ({ url }) => {
 
   if (search) {
     const like = `%${search}%`;
-    const arrayLiteral = `{${search}}`;
-    query = query.or(`name.ilike.${like},department.ilike.${like},matching_courses.cs.${arrayLiteral}`);
+    query = query.or(
+      `name.ilike.${like},department.ilike.${like},matching_courses_text.ilike.${like}`
+    );
   }
 
   const { data, error, count } = await query;
