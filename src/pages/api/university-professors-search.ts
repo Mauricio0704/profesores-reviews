@@ -32,12 +32,14 @@ export const GET: APIRoute = async ({ url }) => {
 
   if (search) {
     const like = `%${search}%`;
-    query = query.or(`name.ilike.${like},department.ilike.${like},matching_courses.ilike.${like}`);
+    const arrayLiteral = `{${search}}`;
+    query = query.or(`name.ilike.${like},department.ilike.${like},matching_courses.cs.${arrayLiteral}`);
   }
 
   const { data, error, count } = await query;
 
   if (error) {
+    console.error("Error fetching professors:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { "content-type": "application/json" },
