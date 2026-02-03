@@ -204,15 +204,4 @@ const filledStars = Math.round(overallRating);
 <script>
   const backBtn = document.getElementById('professor-back-btn');
   backBtn?.addEventListener('click', () => window.history.back());
-
-  const openReviewButtons = document.querySelectorAll('[data-action="open-review"]');
-  const reviewDetails = document.getElementById('review-form-details') as HTMLDetailsElement | null;
-  const reviewFormAnchor = document.getElementById('review-form');
-
-  openReviewButtons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      if (reviewDetails) reviewDetails.open = true;
-      if (reviewFormAnchor) reviewFormAnchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-  });
 </script>

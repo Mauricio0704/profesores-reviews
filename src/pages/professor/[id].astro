@@ -22,13 +22,17 @@ if (error || !professor) {
 const universitySlug = professor.universities?.slug;
 const universityId = professor.universities?.id;
 
-const { data: courses, error: coursesError } = await supabaseServer
-    .from('courses')
-    .select('id, name, code')
-    .eq('university_id', universityId)
-    .order('name', { ascending: true });
+const { data: professorCourses, error: professorCoursesError } = await supabaseServer
+    .from('professor_courses')
+    .select('courses(id, name, code)')
+    .eq('professor_id', id);
 
-const universityCourses = coursesError ? [] : (courses ?? []);
+const professorCoursesList = professorCoursesError
+    ? []
+    : (professorCourses ?? [])
+        .map((row: any) => row.courses)
+        .filter(Boolean)
+        .sort((a: any, b: any) => String(a.name || '').localeCompare(String(b.name || '')));
 
 const { data: reviews, error: reviewsError } = await supabaseServer
     .from('reviews')
@@ -87,28 +91,12 @@ const reviewCards = professorReviews.map((review: any) => ({
             backText="Volver a la Universidad"
         />
 
-        <details id="review-form-details" class="mt-10">
-            <summary onclick="handleOpenReview(event)" class="cursor-pointer inline-block px-3 py-2 bg-purple-600 text-white rounded-md">
-                Añadir review
-            </summary>
-            <div id="review-form" class="mt-4">
-                <ReviewForm professorId={id} universityId={universityId} courses={universityCourses} />
-            </div>
-        </details>
+        <ReviewForm
+            professorId={id}
+            universityId={universityId}
+            courses={professorCoursesList}
+            professorName={professor.name}
+        />
     </main>
 </Layout>
 
-<script>
-    function hasAuthCookies() {
-        return document.cookie.includes('sb-access-token=') && document.cookie.includes('sb-refresh-token=');
-    }
-
-    function handleOpenReview(event: { preventDefault: () => void; }) {
-        if (!hasAuthCookies()) {
-            event.preventDefault();
-            // redirect to signin so user can authenticate before posting a review
-            window.location.href = '/signin';
-        }
-        // if cookies exist, allow the details element to open and show the form
-    }
-</script>
