@@ -1,7 +1,7 @@
 ---
 import Layout from "../layouts/Layout.astro";
 
-const { cookies, redirect } = Astro;
+const { cookies, redirect, url } = Astro;
 
 const accessToken = cookies.get("sb-access-token");
 const refreshToken = cookies.get("sb-refresh-token");
@@ -9,12 +9,18 @@ const refreshToken = cookies.get("sb-refresh-token");
 if (accessToken && refreshToken) {
   return redirect("/");
 }
+
+const error = url.searchParams.get("error");
 ---
 
 <Layout title="Sign in">
   <div class="max-w-105 mx-auto my-12 p-8 bg-white/90 rounded-xl shadow-lg">
     <h1 class="text-2xl text-slate-900 mb-2">Inicia sesión</h1>
     <p class="text-sm text-slate-500 mb-5">¿No estás registrado? <a class="text-purple-600 hover:underline" href="/register">Crea una cuenta</a></p>
+
+    {error === "invalid" && (
+      <p class="text-sm text-red-600 mb-4">Email o contraseña inválidos. Intenta de nuevo.</p>
+    )}
 
     <form class="flex flex-col gap-3" action="/api/auth/signin" method="post">
       <label class="font-semibold text-slate-700 text-sm" for="email">Email</label>
