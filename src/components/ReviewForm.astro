@@ -11,7 +11,7 @@ interface Props {
 const { professorId, universityId, courses = [], professorName = 'este profesor' } = Astro.props as Props;
 ---
 
-<div id="review-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto">
+<div id="review-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50 overflow-y-auto" data-courses={JSON.stringify(courses)}>
   <div class="bg-white rounded-2xl max-w-2xl w-full my-8 shadow-2xl">
     {/* Header */}
     <div class="flex items-center justify-between p-6 border-b border-gray-200">
@@ -31,10 +31,10 @@ const { professorId, universityId, courses = [], professorName = 'este profesor'
 
       {/* Course */}
       <div>
-        <label class="block text-sm font-semibold text-slate-700 mb-1" for="course_id">Curso (opcional)</label>
+        <label class="block text-sm font-semibold text-slate-700 mb-1" for="course_id">Curso *</label>
         {courses.length > 0 ? (
-          <select name="course_id" id="course_id" class="w-full p-2.5 border border-gray-200 rounded-lg">
-            <option value="">Seleccionar (opcional)</option>
+          <select name="course_id" id="course_id" class="w-full p-2.5 border border-gray-200 rounded-lg" required>
+            <option value="">Seleccionar</option>
             {courses.map((c) => (
               <option value={c.id}>{c.code ? `${c.code} — ${c.name}` : c.name}</option>
             ))}
@@ -70,28 +70,68 @@ const { professorId, universityId, courses = [], professorName = 'este profesor'
       </div>
 
       {/* Ratings */}
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="space-y-6">
         <div>
-          <label class="block text-sm font-semibold text-slate-700 mb-1" for="quality">Calidad</label>
-          <select name="quality" id="quality" class="w-full p-2.5 border border-gray-200 rounded-lg" required>
-            <option value="5">5 — Excelente</option>
-            <option value="4">4 — Muy buena</option>
-            <option value="3">3 — Buena</option>
-            <option value="2">2 — Regular</option>
-            <option value="1">1 — Mala</option>
-          </select>
+          <h3 class="text-sm font-semibold text-slate-900">Calidad</h3>
+          <p class="text-xs text-slate-500">Se calculará como promedio de estas dos respuestas.</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+            <div>
+              <label class="block text-sm font-semibold text-slate-700 mb-1" for="clarity">¿Qué tan claro explica el profesor?</label>
+              <select id="clarity" class="w-full p-2.5 border border-gray-200 rounded-lg" required>
+                <option value="">Seleccionar (1-5)</option>
+                <option value="1">1 — Muy poco claro</option>
+                <option value="2">2 — Poco claro</option>
+                <option value="3">3 — Neutral</option>
+                <option value="4">4 — Claro</option>
+                <option value="5">5 — Muy claro</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-slate-700 mb-1" for="learning">¿Realmente aprendiste en la materia?</label>
+              <select id="learning" class="w-full p-2.5 border border-gray-200 rounded-lg" required>
+                <option value="">Seleccionar (1-5)</option>
+                <option value="1">1 — Nada</option>
+                <option value="2">2 — Poco</option>
+                <option value="3">3 — Algo</option>
+                <option value="4">4 — Bastante</option>
+                <option value="5">5 — Mucho</option>
+              </select>
+            </div>
+          </div>
         </div>
+
         <div>
-          <label class="block text-sm font-semibold text-slate-700 mb-1" for="difficulty">Dificultad</label>
-          <select name="difficulty" id="difficulty" class="w-full p-2.5 border border-gray-200 rounded-lg" required>
-            <option value="5">5 — Muy difícil</option>
-            <option value="4">4 — Difícil</option>
-            <option value="3">3 — Moderada</option>
-            <option value="2">2 — Fácil</option>
-            <option value="1">1 — Muy fácil</option>
-          </select>
+          <h3 class="text-sm font-semibold text-slate-900">Dificultad</h3>
+          <p class="text-xs text-slate-500">Se calculará como: dificultad = (carga + (6 - justicia)) / 2.</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+            <div>
+              <label class="block text-sm font-semibold text-slate-700 mb-1" for="workload">Carga de trabajo semanal fuera de clases</label>
+              <select id="workload" class="w-full p-2.5 border border-gray-200 rounded-lg" required>
+                <option value="">Seleccionar (1-5)</option>
+                <option value="1">1 — 4 horas o menos</option>
+                <option value="2">2 — Entre 5 y 8 horas</option>
+                <option value="3">3 — Entre 9 y 12 horas</option>
+                <option value="4">4 — Entre 13 y 16 horas</option>
+                <option value="5">5 — Más de 16 horas</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-slate-700 mb-1" for="fairness">¿Qué tan justo fue evaluando?</label>
+              <select id="fairness" class="w-full p-2.5 border border-gray-200 rounded-lg" required>
+                <option value="">Seleccionar (1-5)</option>
+                <option value="1">1 — Muy injusto</option>
+                <option value="2">2 — Injusto</option>
+                <option value="3">3 — Neutral</option>
+                <option value="4">4 — Justo</option>
+                <option value="5">5 — Muy justo</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
+
+      <input type="hidden" name="quality" id="quality" />
+      <input type="hidden" name="difficulty" id="difficulty" />
 
       {/* Comment */}
       <div>
@@ -118,6 +158,7 @@ const { professorId, universityId, courses = [], professorName = 'este profesor'
 </div>
 
 <script>
+  const courses = JSON.parse(document.getElementById('review-modal')?.getAttribute('data-courses') || '[]');
   const modal = document.getElementById('review-modal');
   const closeBtn = document.getElementById('close-review-modal');
   const cancelBtn = document.getElementById('cancel-review-modal');
@@ -125,6 +166,15 @@ const { professorId, universityId, courses = [], professorName = 'este profesor'
   const addCourseBtn = document.getElementById('add-course-btn');
   const toggle = document.getElementById('new-course-toggle') as HTMLInputElement | null;
   const fields = document.getElementById('new-course-fields');
+  const form = document.querySelector('#review-modal form') as HTMLFormElement | null;
+  const newCourseCode = document.getElementById('new_course_code') as HTMLInputElement | null;
+  const newCourseName = document.getElementById('new_course_name') as HTMLInputElement | null;
+  const clarity = document.getElementById('clarity') as HTMLSelectElement | null;
+  const learning = document.getElementById('learning') as HTMLSelectElement | null;
+  const workload = document.getElementById('workload') as HTMLSelectElement | null;
+  const fairness = document.getElementById('fairness') as HTMLSelectElement | null;
+  const qualityInput = document.getElementById('quality') as HTMLInputElement | null;
+  const difficultyInput = document.getElementById('difficulty') as HTMLInputElement | null;
 
   const hasAuthCookies = () =>
     document.cookie.includes('sb-access-token=') && document.cookie.includes('sb-refresh-token=');
@@ -157,11 +207,25 @@ const { professorId, universityId, courses = [], professorName = 'este profesor'
     if (!fields) return;
     fields.classList.remove('hidden');
     if (toggle) toggle.checked = true;
+    if (newCourseCode) newCourseCode.required = true;
+    if (newCourseName) newCourseName.required = true;
+  };
+
+  const hideNewCourseFields = () => {
+    if (!fields) return;
+    fields.classList.add('hidden');
+    if (toggle) toggle.checked = false;
+    if (newCourseCode) newCourseCode.required = false;
+    if (newCourseName) newCourseName.required = false;
   };
 
   if (toggle && fields) {
     toggle.addEventListener('change', () => {
-      fields.classList.toggle('hidden', !toggle.checked);
+      if (toggle.checked) {
+        showNewCourseFields();
+      } else {
+        hideNewCourseFields();
+      }
     });
   }
 
@@ -171,6 +235,52 @@ const { professorId, universityId, courses = [], professorName = 'este profesor'
     if (courseSelect.value === '__new__') {
       courseSelect.value = '';
       showNewCourseFields();
+    } else {
+      hideNewCourseFields();
     }
   });
+
+  const toNumber = (value: string) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const updateScores = () => {
+    const clarityValue = toNumber(clarity?.value || '0');
+    const learningValue = toNumber(learning?.value || '0');
+    const workloadValue = toNumber(workload?.value || '0');
+    const fairnessValue = toNumber(fairness?.value || '0');
+
+    const qualityScore = clarityValue && learningValue ? (clarityValue + learningValue) / 2 : 0;
+    const difficultyScore = workloadValue && fairnessValue ? (workloadValue + (6 - fairnessValue)) / 2 : 0;
+
+    if (qualityInput) qualityInput.value = qualityScore ? qualityScore.toFixed(1) : '';
+    if (difficultyInput) difficultyInput.value = difficultyScore ? String(difficultyScore) : '';
+  };
+
+  [clarity, learning, workload, fairness].forEach((el) => {
+    el?.addEventListener('change', updateScores);
+  });
+
+  form?.addEventListener('submit', (event) => {
+    updateScores();
+    if (courses.length > 0 && !courseSelect?.value && !newCourseCode?.value && !newCourseName?.value) {
+      event.preventDefault();
+      alert('Selecciona un curso o agrega uno nuevo.');
+      return;
+    }
+    if (courses.length === 0 && (!newCourseCode?.value || !newCourseName?.value)) {
+      event.preventDefault();
+      alert('Debes agregar un curso nuevo para continuar.');
+      return;
+    }
+    if (!qualityInput?.value || !difficultyInput?.value) {
+      event.preventDefault();
+      alert('Completa todas las preguntas de calidad y dificultad con valores del 1 al 5.');
+    }
+  });
+
+  if (courses.length === 0) {
+    showNewCourseFields();
+  }
 </script>
