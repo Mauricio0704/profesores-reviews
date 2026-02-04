@@ -6,11 +6,15 @@ const { cookies, redirect, url } = Astro;
 const accessToken = cookies.get("sb-access-token");
 const refreshToken = cookies.get("sb-refresh-token");
 
-if (accessToken && refreshToken) {
-  return redirect("/");
-}
-
 const error = url.searchParams.get("error");
+const returnToParam = url.searchParams.get("returnTo") ?? "/";
+const returnTo = returnToParam.startsWith("/") && !returnToParam.startsWith("//")
+  ? returnToParam
+  : "/";
+
+if (accessToken && refreshToken) {
+  return redirect(returnTo);
+}
 ---
 
 <Layout title="Sign in">
@@ -23,6 +27,7 @@ const error = url.searchParams.get("error");
     )}
 
     <form class="flex flex-col gap-3" action="/api/auth/signin" method="post">
+      <input type="hidden" name="returnTo" value={returnTo} />
       <label class="font-semibold text-slate-700 text-sm" for="email">Email</label>
       <input class="p-2.5 px-3 border border-gray-200 rounded-lg text-base focus:outline-none focus:ring-4 focus:ring-purple-100 focus:border-purple-600" type="email" name="email" id="email" required />
 

@@ -181,7 +181,8 @@ const { professorId, universityId, courses = [], professorName = 'este profesor'
 
   const openModal = () => {
     if (!hasAuthCookies()) {
-      window.location.href = '/signin';
+      const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      window.location.href = `/signin?returnTo=${encodeURIComponent(returnTo)}`;
       return;
     }
     modal?.classList.remove('hidden');
