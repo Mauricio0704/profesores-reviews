@@ -25,7 +25,7 @@ const rangeStart = (currentPage - 1) * PAGE_SIZE;
 const rangeEnd = rangeStart + PAGE_SIZE - 1;
 
 const { data: professors, error: professorsError, count } = await supabaseServer
-  .from("university_professor_stats")
+  .from("university_professor_stats_full_search")
   .select(
     "id, name, department, avg_rating, avg_difficulty, retake_rate, review_count, matching_courses",
     { count: "exact" }
