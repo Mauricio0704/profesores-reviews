@@ -1,5 +1,5 @@
 ---
-import { supabaseServer } from "~/lib/supabase";
+import { supabaseServer, supabaseClient } from "~/lib/supabase";
 import Layout from "../../layouts/Layout.astro";
 import ReviewForm from "~/components/ReviewForm.astro";
 import ProfessorDetails from "~/components/ProfessorDetails.astro";
@@ -42,6 +42,41 @@ const { data: reviews, error: reviewsError } = await supabaseServer
 
 const professorReviews = reviewsError ? [] : (reviews ?? []);
 
+const accessToken = Astro.cookies.get('sb-access-token');
+const refreshToken = Astro.cookies.get('sb-refresh-token');
+let userId: string | null = null;
+
+if (accessToken && refreshToken) {
+    const session = await supabaseClient.auth.setSession({
+        access_token: accessToken.value,
+        refresh_token: refreshToken.value,
+    });
+    userId = session.data.session?.user?.id ?? null;
+}
+
+const reviewIds = professorReviews.map((review: any) => review.id).filter(Boolean);
+
+const { data: reviewVotes, error: reviewVotesError } = reviewIds.length
+    ? await supabaseServer
+        .from('review_votes')
+        .select('review_id, vote, user_id')
+        .in('review_id', reviewIds)
+    : { data: [], error: null };
+
+const votesList = reviewVotesError ? [] : (reviewVotes ?? []);
+const voteSummary = votesList.reduce((acc: Record<string, { up: number; down: number; userVote?: string | null }>, row: any) => {
+    const reviewId = String(row.review_id);
+    if (!acc[reviewId]) {
+        acc[reviewId] = { up: 0, down: 0, userVote: null };
+    }
+    if (Number(row.vote) === 1) acc[reviewId].up += 1;
+    if (Number(row.vote) === -1) acc[reviewId].down += 1;
+    if (userId && row.user_id === userId) {
+        acc[reviewId].userVote = Number(row.vote) === 1 ? 'up' : 'down';
+    }
+    return acc;
+}, {});
+
 const qualityValues = professorReviews
     .map((review: any) => Number(review.quality))
     .filter((value: number) => Number.isFinite(value));
@@ -72,6 +107,9 @@ const reviewCards = professorReviews.map((review: any) => ({
     would_recommend: review.would_recommend,
     course_code: review.courses?.code ?? null,
     course_name: review.courses?.name ?? null,
+    upvotes: voteSummary[String(review.id)]?.up ?? 0,
+    downvotes: voteSummary[String(review.id)]?.down ?? 0,
+    user_vote: voteSummary[String(review.id)]?.userVote ?? null,
 }));
 ---
 

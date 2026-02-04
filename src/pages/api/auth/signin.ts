@@ -7,6 +7,10 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   const formData = await request.formData();
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();
+  const returnToParam = formData.get("returnTo")?.toString() ?? "/";
+  const returnTo = returnToParam.startsWith("/") && !returnToParam.startsWith("//")
+    ? returnToParam
+    : "/";
 
   if (!email || !password) {
     return new Response("Email and password are required", { status: 400 });
@@ -18,7 +22,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   });
 
   if (error) {
-    return redirect("/signin?error=invalid");
+    return redirect(`/signin?error=invalid&returnTo=${encodeURIComponent(returnTo)}`);
   }
 
   const { access_token, refresh_token } = data.session;
@@ -28,5 +32,5 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   cookies.set("sb-refresh-token", refresh_token, {
     path: "/",
   });
-  return redirect("/");
+  return redirect(returnTo);
 };

@@ -21,6 +21,9 @@ interface Review {
   would_recommend?: boolean | null;
   course_code?: string | null;
   course_name?: string | null;
+  upvotes?: number | null;
+  downvotes?: number | null;
+  user_vote?: 'up' | 'down' | null;
 }
 
 interface Props {
@@ -199,9 +202,144 @@ const filledStars = Math.round(overallRating);
       </div>
     )}
   </div>
+
+  {/* Auth Required Modal */}
+  <div
+    id="auth-required-modal"
+    class="fixed inset-0 z-50 hidden items-center justify-center bg-gray-900/50 px-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="auth-required-title"
+  >
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+      <h3 id="auth-required-title" class="text-lg font-semibold text-gray-900 mb-2">
+        Iniciar sesión requerido
+      </h3>
+      <p id="auth-required-message" class="text-gray-600 mb-6">
+        Para realizar esta acción necesitas iniciar sesión.
+      </p>
+      <div class="flex items-center gap-3">
+        <button
+          id="auth-required-cancel"
+          type="button"
+          class="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-gray-700 hover:bg-gray-50"
+        >
+          Cancelar
+        </button>
+        <button
+          id="auth-required-confirm"
+          type="button"
+          class="flex-1 rounded-xl bg-blue-600 px-4 py-2.5 text-white hover:bg-blue-700"
+        >
+          Iniciar sesión
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
   const backBtn = document.getElementById('professor-back-btn');
   backBtn?.addEventListener('click', () => window.history.back());
+
+  const hasAuthCookies = () =>
+    document.cookie.includes('sb-access-token=') && document.cookie.includes('sb-refresh-token=');
+
+  const authModal = document.getElementById('auth-required-modal');
+  const authMessage = document.getElementById('auth-required-message');
+  const authCancel = document.getElementById('auth-required-cancel');
+  const authConfirm = document.getElementById('auth-required-confirm');
+
+  const openAuthModal = (message: string) => {
+    if (authMessage) authMessage.textContent = message;
+    authModal?.classList.remove('hidden');
+    authModal?.classList.add('flex');
+  };
+
+  const closeAuthModal = () => {
+    authModal?.classList.add('hidden');
+    authModal?.classList.remove('flex');
+  };
+
+  authCancel?.addEventListener('click', closeAuthModal);
+  authConfirm?.addEventListener('click', () => {
+    const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    window.location.href = `/signin?returnTo=${encodeURIComponent(returnTo)}`;
+  });
+  authModal?.addEventListener('click', (event) => {
+    if (event.target === authModal) closeAuthModal();
+  });
+
+  document.querySelectorAll('[data-action="open-review"]').forEach((btn) => {
+    btn.addEventListener(
+      'click',
+      (event) => {
+        if (hasAuthCookies()) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        openAuthModal('Para realizar esta acción necesitas iniciar sesión.');
+      },
+      { capture: true }
+    );
+  });
+
+  const applyVoteClasses = (button: Element | null, isActive: boolean, type: 'up' | 'down') => {
+    if (!button) return;
+    const activeClasses = type === 'up'
+      ? ['bg-blue-50', 'text-blue-600', 'border-blue-200']
+      : ['bg-red-50', 'text-red-600', 'border-red-200'];
+    const inactiveClasses = type === 'up'
+      ? ['text-gray-600', 'border-transparent', 'hover:text-blue-600', 'hover:bg-blue-50']
+      : ['text-gray-600', 'border-transparent', 'hover:text-red-600', 'hover:bg-red-50'];
+
+    if (isActive) {
+      activeClasses.forEach((cls) => button.classList.add(cls));
+      inactiveClasses.forEach((cls) => button.classList.remove(cls));
+      button.setAttribute('aria-pressed', 'true');
+    } else {
+      activeClasses.forEach((cls) => button.classList.remove(cls));
+      inactiveClasses.forEach((cls) => button.classList.add(cls));
+      button.setAttribute('aria-pressed', 'false');
+    }
+  };
+
+  document.querySelectorAll('[data-action="vote"]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!hasAuthCookies()) {
+        openAuthModal('Para votar necesitas iniciar sesión.');
+        return;
+      }
+
+      const reviewId = btn.getAttribute('data-review-id');
+      const vote = btn.getAttribute('data-vote');
+      if (!reviewId || !vote) return;
+
+      const response = await fetch('/api/review-votes', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ review_id: reviewId, vote }),
+      });
+
+      if (response.status === 401) {
+        const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+        window.location.href = `/signin?returnTo=${encodeURIComponent(returnTo)}`;
+        return;
+      }
+
+      if (!response.ok) return;
+
+      const result = await response.json();
+      const upButton = document.querySelector(`[data-review-id="${reviewId}"][data-vote="up"]`);
+      const downButton = document.querySelector(`[data-review-id="${reviewId}"][data-vote="down"]`);
+
+      const upCount = upButton?.querySelector('span');
+      const downCount = downButton?.querySelector('span');
+
+      if (upCount) upCount.textContent = String(result.upvotes ?? 0);
+      if (downCount) downCount.textContent = String(result.downvotes ?? 0);
+
+      applyVoteClasses(upButton, result.userVote === 'up', 'up');
+      applyVoteClasses(downButton, result.userVote === 'down', 'down');
+    });
+  });
 </script>
