@@ -1,10 +1,12 @@
 import { supabaseServer } from "../../lib/supabase";
+import type { APIRoute } from "astro";
 
-export async function GET({ request }: { request: Request }) {
+export const GET: APIRoute = async ({ request }) => {
   try {
     const url = new URL(request.url);
     const params = url.searchParams;
 
+    // Validación básica
     const university_id = params.get("university_id");
     if (!university_id) {
       return new Response(JSON.stringify({ error: "university_id is required" }), {
@@ -16,29 +18,72 @@ export async function GET({ request }: { request: Request }) {
     const campus_id = params.get("campus_id");
     const course_id = params.get("course_id");
     const search = params.get("search");
-    const sort = params.get("sort") || "best";
+    
+    // Paginación
     const limit = Math.max(1, parseInt(params.get("limit") || "20", 10));
     const page = Math.max(1, parseInt(params.get("page") || "1", 10));
+    const rangeStart = (page - 1) * limit;
+    const rangeEnd = rangeStart + limit - 1;
 
-    const offset = (page - 1) * limit;
-    const rangeStart = offset;
-    const rangeEnd = offset + limit - 1;
+    let professorIdsFromCourseSearch: number[] = [];
 
-    // Base query: select basic professor fields and rely on DB columns for aggregates
-    let qb = supabaseServer
-      .from("professors")
-      .select("id,name,department")
-      .range(rangeStart, rangeEnd);
-
-    // Apply optional filters where possible
     if (search) {
-      qb = qb.ilike("name", `%${search}%`);
+      const { data: matchingCourses } = await supabaseServer
+        .from("courses")
+        .select("id")
+        .eq("university_id", university_id)
+        .or(`code.ilike.%${search}%,name.ilike.%${search}%`);
+
+      if (matchingCourses && matchingCourses.length > 0) {
+        const courseIds = matchingCourses.map((c) => c.id);
+
+        const { data: profsInCourses } = await supabaseServer
+          .from("professor_courses")
+          .select("professor_id")
+          .in("course_id", courseIds);
+
+        if (profsInCourses) {
+          professorIdsFromCourseSearch = profsInCourses.map((p) => p.professor_id);
+        }
+      }
     }
 
-    if (campus_id) qb = qb.eq("campus_id", campus_id);
-    if (course_id) qb = qb.eq("course_id", course_id);
+    let query = supabaseServer
+      .from("professors")
+      .select("id, name, department, reviews_count")
+      .eq("university_id", university_id);
+    
+    if (campus_id) query = query.eq("campus_id", campus_id);
 
-    const { data, error } = await qb;
+    if (search) {
+      if (professorIdsFromCourseSearch.length > 0) {
+        query = query.or(`name.ilike.%${search}%,id.in.(${professorIdsFromCourseSearch.join(',')})`);
+      } else {
+        query = query.ilike("name", `%${search}%`);
+      }
+    }
+
+    if (course_id) {
+      const { data: profsWithCourse } = await supabaseServer
+        .from("professor_courses")
+        .select("professor_id")
+        .eq("course_id", course_id);
+      
+      const ids = profsWithCourse?.map(p => p.professor_id) || [];
+      
+      if (ids.length > 0) {
+        query = query.in("id", ids);
+      } else {
+        query = query.eq("id", 0);
+      }
+    }
+
+    query = query
+      .order("reviews_count", { ascending: false })
+      .order("name", { ascending: true })
+      .range(rangeStart, rangeEnd);
+
+    const { data, error } = await query;
 
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), {
@@ -64,4 +109,91 @@ export async function GET({ request }: { request: Request }) {
       headers: { "content-type": "application/json" },
     });
   }
-}
+};
+
+export const POST: APIRoute = async ({ request }) => {
+  try {
+    const body = await request.json();
+    const { name, department, university_id, course_name, course_code } = body;
+
+    if (!name || !department || !university_id) {
+      return new Response(
+        JSON.stringify({ error: "Faltan campos requeridos" }),
+        { status: 400 }
+      );
+    }
+
+    const { data: newProfessor, error: profError } = await supabaseServer
+      .from("professors")
+      .insert([
+        {
+          name,
+          department,
+          university_id
+        },
+      ])
+      .select()
+      .single();
+
+    if (profError) {
+      return new Response(JSON.stringify({ error: profError.message }), { status: 500 });
+    }
+
+    if (course_code) {
+      let courseIdToLink = null;
+
+      const { data: existingCourse } = await supabaseServer
+        .from("courses")
+        .select("id")
+        .eq("code", course_code)
+        .eq("university_id", university_id)
+        .maybeSingle();
+
+      if (existingCourse) {
+        courseIdToLink = existingCourse.id;
+      } else {
+        const newCourseName = course_name || course_code; 
+        
+        const { data: createdCourse, error: createCourseError } = await supabaseServer
+          .from("courses")
+          .insert([
+            {
+              code: course_code,
+              name: newCourseName,
+              university_id: university_id
+            }
+          ])
+          .select("id")
+          .single();
+
+        if (createCourseError) {
+           console.error("Error creando el curso nuevo:", createCourseError);
+        } else {
+           courseIdToLink = createdCourse.id;
+        }
+      }
+
+      if (courseIdToLink) {
+        const { error: linkError } = await supabaseServer
+          .from("professor_courses")
+          .insert([
+            {
+              professor_id: newProfessor.id,
+              course_id: courseIdToLink,
+            },
+          ]);
+          
+        if (linkError) console.error("Error linkeando curso:", linkError);
+      }
+    }
+
+    return new Response(JSON.stringify({ message: "Profesor sugerido", data: newProfessor }), {
+      status: 201,
+    });
+
+  } catch (error) {
+    return new Response(JSON.stringify({ error: "Error interno del servidor" }), {
+      status: 500,
+    });
+  }
+};

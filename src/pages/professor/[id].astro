@@ -1,0 +1,140 @@
+---
+import { supabaseServer, supabaseClient } from "~/lib/supabase";
+import Layout from "../../layouts/Layout.astro";
+import ReviewForm from "~/components/ReviewForm.astro";
+import ProfessorDetails from "~/components/ProfessorDetails.astro";
+const { id } = Astro.params;
+
+if (!id) {
+    return Astro.redirect('/404');
+}
+
+const { data: professor, error } = await supabaseServer
+    .from('professors')
+    .select('id, name, department, universities(id, slug)')
+    .eq('id', id)
+    .single();
+
+if (error || !professor) {
+        return Astro.redirect('/404');
+}
+
+const universitySlug = professor.universities?.slug;
+const universityId = professor.universities?.id;
+
+const { data: professorCourses, error: professorCoursesError } = await supabaseServer
+    .from('professor_courses')
+    .select('courses(id, name, code)')
+    .eq('professor_id', id);
+
+const professorCoursesList = professorCoursesError
+    ? []
+    : (professorCourses ?? [])
+        .map((row: any) => row.courses)
+        .filter(Boolean)
+        .sort((a: any, b: any) => String(a.name || '').localeCompare(String(b.name || '')));
+
+const { data: reviews, error: reviewsError } = await supabaseServer
+    .from('reviews')
+    .select('id, professor_id, course_id, comment, created_at, difficulty, quality, would_recommend, courses(name, code)')
+    .eq('professor_id', id)
+    .order('created_at', { ascending: false });
+
+const professorReviews = reviewsError ? [] : (reviews ?? []);
+
+const accessToken = Astro.cookies.get('sb-access-token');
+const refreshToken = Astro.cookies.get('sb-refresh-token');
+let userId: string | null = null;
+
+if (accessToken && refreshToken) {
+    const session = await supabaseClient.auth.setSession({
+        access_token: accessToken.value,
+        refresh_token: refreshToken.value,
+    });
+    userId = session.data.session?.user?.id ?? null;
+}
+
+const reviewIds = professorReviews.map((review: any) => review.id).filter(Boolean);
+
+const { data: reviewVotes, error: reviewVotesError } = reviewIds.length
+    ? await supabaseServer
+        .from('review_votes')
+        .select('review_id, vote, user_id')
+        .in('review_id', reviewIds)
+    : { data: [], error: null };
+
+const votesList = reviewVotesError ? [] : (reviewVotes ?? []);
+const voteSummary = votesList.reduce((acc: Record<string, { up: number; down: number; userVote?: string | null }>, row: any) => {
+    const reviewId = String(row.review_id);
+    if (!acc[reviewId]) {
+        acc[reviewId] = { up: 0, down: 0, userVote: null };
+    }
+    if (Number(row.vote) === 1) acc[reviewId].up += 1;
+    if (Number(row.vote) === -1) acc[reviewId].down += 1;
+    if (userId && row.user_id === userId) {
+        acc[reviewId].userVote = Number(row.vote) === 1 ? 'up' : 'down';
+    }
+    return acc;
+}, {});
+
+const qualityValues = professorReviews
+    .map((review: any) => Number(review.quality))
+    .filter((value: number) => Number.isFinite(value));
+
+const difficultyValues = professorReviews
+    .map((review: any) => Number(review.difficulty))
+    .filter((value: number) => Number.isFinite(value));
+
+const average = (values: number[]) =>
+    values.length > 0 ? values.reduce((sum, v) => sum + v, 0) / values.length : 0;
+
+const overallRating = average(qualityValues);
+const difficultyRating = average(difficultyValues);
+const wouldTakeAgainPercentage = professorReviews.length
+    ? Math.round(
+            (professorReviews.filter((review: any) => !!review.would_recommend).length /
+                professorReviews.length) *
+                100
+        )
+    : 0;
+
+const reviewCards = professorReviews.map((review: any) => ({
+    id: review.id,
+    comment: review.comment,
+    created_at: review.created_at,
+    difficulty: review.difficulty,
+    quality: review.quality,
+    would_recommend: review.would_recommend,
+    course_code: review.courses?.code ?? null,
+    course_name: review.courses?.name ?? null,
+    upvotes: voteSummary[String(review.id)]?.up ?? 0,
+    downvotes: voteSummary[String(review.id)]?.down ?? 0,
+    user_vote: voteSummary[String(review.id)]?.userVote ?? null,
+}));
+---
+
+<Layout>
+    <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <ProfessorDetails
+            professor={{
+                name: professor.name,
+                department: professor.department,
+                overallRating,
+                difficultyRating,
+                wouldTakeAgainPercentage,
+                totalReviews: professorReviews.length,
+            }}
+            reviews={reviewCards}
+            backHref={`/university/${universitySlug}`}
+            backText="Volver a la Universidad"
+        />
+
+        <ReviewForm
+            professorId={id}
+            universityId={universityId}
+            courses={professorCoursesList}
+            professorName={professor.name}
+        />
+    </main>
+</Layout>
+

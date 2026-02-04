@@ -39,14 +39,14 @@ const searchTerms = `${name} ${slug} ${location}`.toLowerCase();
   class="university-card-item group bg-white rounded-2xl border-2 border-gray-200 p-8 hover:border-indigo-500 hover:shadow-2xl transition-all duration-300 text-left relative overflow-hidden block"
 >
   {/* Gradient Background Effect (Hover) */}
-  <div class="absolute inset-0 bg-gradient-to-br from-indigo-50 to-blue-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+  <div class="absolute inset-0 bg-linear-to-br from-indigo-50 to-blue-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
   
   {/* Content Container */}
   <div class="relative z-10">
     
     {/* Icon Header */}
     {showIcon && (
-        <div class="bg-gradient-to-br from-indigo-100 to-blue-100 rounded-xl p-3 w-fit mb-4 group-hover:scale-110 transition-transform duration-300">
+        <div class="bg-linear-to-br from-indigo-100 to-blue-100 rounded-xl p-3 w-fit mb-4 group-hover:scale-110 transition-transform duration-300">
             <GraduationCap class="w-8 h-8 text-indigo-600" />
         </div>  
     )}
@@ -68,7 +68,7 @@ const searchTerms = `${name} ${slug} ${location}`.toLowerCase();
     <div class="space-y-3 mb-4">
       
       {/* Average Rating Box */}
-      <div class="flex items-center justify-between p-3 bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg border border-yellow-200">
+      <div class="flex items-center justify-between p-3 bg-linear-to-r from-yellow-50 to-amber-50 rounded-lg border border-yellow-200">
         <div class="flex items-center gap-2">
           <Star class="w-5 h-5 text-yellow-500 fill-yellow-500" />
           <span class="text-sm font-semibold text-gray-700">Calificación Promedio</span>

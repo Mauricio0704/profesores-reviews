@@ -1,0 +1,51 @@
+---
+import { Search, X } from '@lucide/astro';
+
+interface Props {
+  placeholder?: string;
+}
+
+const { placeholder = "Search professors by name, department, or course..." } = Astro.props;
+---
+
+<div class="relative">
+  <div class="absolute left-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+    <Search class="w-5 h-5 text-gray-400" />
+  </div>
+  
+  <input
+    type="text"
+    id="professor-search"
+    placeholder={placeholder}
+    class="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400"
+  />
+  
+  <button
+    id="clear-search"
+    class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 hidden transition-colors"
+    aria-label="Clear search"
+  >
+    <X class="w-5 h-5" />
+  </button>
+</div>
+
+<script>
+  const searchInput = document.getElementById('professor-search') as HTMLInputElement;
+  const clearBtn = document.getElementById('clear-search') as HTMLButtonElement;
+
+  const handleInput = () => {
+    const value = searchInput.value;
+    
+    clearBtn.classList.toggle('hidden', value.length === 0);
+    
+    document.dispatchEvent(new CustomEvent('search-professors', { detail: value }));
+  };
+
+  searchInput?.addEventListener('input', handleInput);
+  
+  clearBtn?.addEventListener('click', () => {
+    searchInput.value = '';
+    handleInput();
+    searchInput.focus();
+  });
+</script>

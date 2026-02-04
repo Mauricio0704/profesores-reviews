@@ -1,32 +1,431 @@
 ---
 import Layout from "../../layouts/Layout.astro";
+import BackButton from "../../components/BackButton.astro";
+import ProfessorSearch from "../../components/ProfessorSearch.astro";
+import ProfessorCard from "../../components/ProfessorCard.astro";
+import AddProfessorModal from "~/components/AddProfessorModal.astro";
 import { supabaseServer } from "../../lib/supabase";
+import { Star, UserPlus } from '@lucide/astro';
 
 const { slug } = Astro.params;
+const PAGE_SIZE = 12;
+const currentPage = Math.max(1, Number(Astro.url.searchParams.get("page") || 1));
 
 const { data: university, error } = await supabaseServer
   .from("universities")
-  .select("*")
+  .select("id, name, slug")
   .eq("slug", slug)
   .single();
 
 if (error || !university) {
   return Astro.redirect('/404');
 }
+
+const rangeStart = (currentPage - 1) * PAGE_SIZE;
+const rangeEnd = rangeStart + PAGE_SIZE - 1;
+
+const { data: professors, error: professorsError, count } = await supabaseServer
+  .from("university_professor_stats_full_search")
+  .select(
+    "id, name, department, avg_rating, avg_difficulty, retake_rate, review_count, matching_courses",
+    { count: "exact" }
+  )
+  .eq("university_slug", slug)
+  .order("review_count", { ascending: false })
+  .order("name", { ascending: true })
+  .range(rangeStart, rangeEnd);
+
+if (professorsError) {
+  console.error("Error de Supabase:", professorsError.message);
+}
+
+const totalProfessors = count ?? 0;
+const totalPages = Math.max(1, Math.ceil(totalProfessors / PAGE_SIZE));
+const safeCurrentPage = Math.min(currentPage, totalPages);
+const totalProfessorsLabel = totalProfessors >= 1000 ? "+999" : String(totalProfessors);
 ---
 
-<Layout
-    subtitle={university.name} 
->   
-    <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 text-center">
-             <h1 class="text-3xl font-bold text-gray-900 mb-4">
-                Bienvenido a {university.name}
-            </h1>
-            <p class="text-gray-600">
-                Aquí cargaremos la lista de profesores pronto.
-            </p>
-        </div>
+<Layout subtitle={university.name}>
+  <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      
+      {/* Botón Volver */}
+      <div class="mb-6">
+        <BackButton text="Ver otras universidades" href="/" />
+      </div>
+
+      {/* Título */}
+      <div class="mb-8 text-center">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Profesores de {university.name}</h1>
+        <p class="text-gray-600">Encuentra y califica a tus profesores</p>
+      </div>
+
+      {/* Buscador */}
+      <div class="bg-white rounded-2xl border border-gray-200 p-6 mb-8 shadow-sm">
+          <ProfessorSearch placeholder="Buscar profesores por nombre, departamento o curso..." />
+      </div>
+
+      {/*Results Header */}
+      <div class="flex items-center justify-between mb-6">
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900">
+          Todos los Profesores
+        </h2>
+        <p id="results-count" class="text-sm text-blue-600 font-medium mt-1">
+          {totalProfessorsLabel} {totalProfessors === 1 ? 'profesor' : 'profesores'} encontrados
+        </p>
+      </div>
+
+      {/* Botón Suggest */}
+      <button
+        id="suggest-btn"
+        class="inline-flex items-center px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors cursor-pointer"
+      >
+        <UserPlus class="w-5 h-5 mr-2" />
+        Añadir Profesor
+      </button>
     </div>
 
+      {/* CONTENEDOR PRINCIPAL */}
+      <div
+        id="professors-grid"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        data-total={totalProfessors}
+        data-page={safeCurrentPage}
+        data-page-size={PAGE_SIZE}
+        data-total-pages={totalPages}
+        data-slug={slug}
+      >
+        {(professors || []).map((prof: any) => (
+            <ProfessorCard 
+                id={prof.id}
+                name={prof.name} 
+                department={prof.department} 
+                avg_rating={prof.avg_rating} 
+                avg_difficulty={prof.avg_difficulty} 
+                retake_rate={prof.retake_rate} 
+                review_count={prof.review_count}
+                matching_courses={prof.matching_courses} 
+            />
+        ))}
+      </div>
+
+      <div id="no-results-message" class="hidden text-center py-16 bg-white rounded-2xl border-2 border-dashed border-gray-200">
+        <Star class="w-16 h-16 text-gray-300 mx-auto mb-4" />
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">No se encontraron profesores</h3>
+        <p class="text-gray-500 mb-6">
+            Intenta ajustar tus criterios de búsqueda o borrar los filtros aplicados.
+        </p>
+        <button
+            id="clear-filters-btn"
+            class="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors cursor-pointer"
+        >
+            Borrar filtros
+        </button>
+      </div>
+
+      {(professors || []).length === 0 && (
+         <div class="text-center py-16 bg-white rounded-2xl border-2 border-dashed border-gray-200">
+            <p class="text-gray-500 text-lg">Aún no hay datos cargados para esta universidad.</p>
+         </div>
+      )}
+
+      {totalProfessors > PAGE_SIZE && (
+        <div id="pagination-controls" class="mt-10 flex items-center justify-center gap-4">
+          {safeCurrentPage > 1 ? (
+            <a
+              class="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
+              href={`${Astro.url.pathname}?page=${safeCurrentPage - 1}`}
+            >
+              Anterior
+            </a>
+          ) : (
+            <span class="px-4 py-2 rounded-lg border border-gray-200 text-gray-400 cursor-not-allowed">
+              Anterior
+            </span>
+          )}
+
+          <span class="text-sm text-gray-600">
+            Página {safeCurrentPage} de {totalPages}
+          </span>
+
+          {safeCurrentPage < totalPages ? (
+            <a
+              class="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
+              href={`${Astro.url.pathname}?page=${safeCurrentPage + 1}`}
+            >
+              Siguiente
+            </a>
+          ) : (
+            <span class="px-4 py-2 rounded-lg border border-gray-200 text-gray-400 cursor-not-allowed">
+              Siguiente
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Suggest Professor Modal */}
+      <AddProfessorModal universityId={university.id}/>
+  </main>
 </Layout>
+
+<script>
+  const grid = document.getElementById('professors-grid');
+  const noResults = document.getElementById('no-results-message');
+  const countElement = document.getElementById('results-count');
+  const pagination = document.getElementById('pagination-controls');
+  const originalHtml = grid?.innerHTML || '';
+  const originalPaginationHtml = pagination?.innerHTML || '';
+  const originalTotal = Number(grid?.dataset.total || 0);
+  const pageSize = Number(grid?.dataset.pageSize || 12);
+  let currentSearchQuery = '';
+  let isSearching = false;
+
+  const formatCountLabel = (count: number) => (count >= 1000 ? '+999' : String(count));
+
+  const updateCountText = (count: number) => {
+    if (!countElement) return;
+    const professorText = count === 1 ? 'profesor' : 'profesores';
+    const foundText = count === 1 ? 'encontrado' : 'encontrados';
+    countElement.textContent = `${formatCountLabel(count)} ${professorText} ${foundText}`;
+  };
+
+  const updateVisibility = (count: number) => {
+    if (!noResults || !grid) return;
+    if (count === 0) {
+      noResults.classList.remove('hidden');
+      grid.classList.add('hidden');
+    } else {
+      noResults.classList.add('hidden');
+      grid.classList.remove('hidden');
+    }
+  };
+
+  const updatePaginationVisibility = (shouldShow: boolean) => {
+    if (!pagination) return;
+    if (shouldShow) {
+      pagination.classList.remove('hidden');
+    } else {
+      pagination.classList.add('hidden');
+    }
+  };
+
+  const renderSearchPagination = (total: number, page: number, totalPages: number) => {
+    if (!pagination) return;
+    if (total <= pageSize) {
+      updatePaginationVisibility(false);
+      return;
+    }
+
+    updatePaginationVisibility(true);
+
+    const prevDisabled = page <= 1;
+    const nextDisabled = page >= totalPages;
+
+    pagination.innerHTML = `
+      <button
+        class="px-4 py-2 rounded-lg border border-gray-200 ${prevDisabled ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-50'}"
+        data-page="${page - 1}"
+        ${prevDisabled ? 'disabled' : ''}
+      >
+        Anterior
+      </button>
+      <span class="text-sm text-gray-600">Página ${page} de ${totalPages}</span>
+      <button
+        class="px-4 py-2 rounded-lg border border-gray-200 ${nextDisabled ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-50'}"
+        data-page="${page + 1}"
+        ${nextDisabled ? 'disabled' : ''}
+      >
+        Siguiente
+      </button>
+    `;
+  };
+
+  const renderCard = (prof: any) => {
+    const name = prof.name || '';
+    const department = prof.department || '';
+    const avg_rating = Number(prof.avg_rating ?? 0);
+    const avg_difficulty = Number(prof.avg_difficulty ?? 0);
+    const retake_rate = Number(prof.retake_rate ?? 0);
+    const review_count = Number(prof.review_count ?? 0);
+    let courses = [];
+    if (Array.isArray(prof.matching_courses)) {
+        courses = prof.matching_courses;
+    } else if (typeof prof.matching_courses === 'string' && prof.matching_courses.trim() !== '') {
+        courses = prof.matching_courses.split(',').map((c: string) => c.trim());
+    }
+
+    const getRatingColor = (rating: number) => {
+      if (rating >= 4.5) return 'text-green-600';
+      if (rating >= 3.5) return 'text-green-400';
+      if (rating >= 2.5) return 'text-yellow-500';
+      if (rating >= 1.5) return 'text-orange-500';
+      return 'text-red-600';
+    };
+
+    const format1 = (n: number) => (Number.isFinite(n) ? n.toFixed(1) : '0.0');
+
+    const coursesHtml = courses.slice(0, 2).map((course: string) => `
+      <div class="flex items-center gap-2">
+        <svg class="w-3.5 h-3.5 text-green-600 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M2 6l10-4 10 4v12l-10 4-10-4z"></path>
+          <path d="M6 8v12"></path>
+          <path d="M18 8v12"></path>
+          <path d="M2 6l10 4 10-4"></path>
+        </svg>
+        <p class="text-sm text-gray-700 truncate">${course}</p>
+      </div>
+    `).join('');
+
+    const moreCourses = courses.length > 2
+      ? `<p class="text-xs text-gray-500 pl-5">+${courses.length - 2} más</p>`
+      : '';
+
+    const coursesContainerClass = 'courses-container mb-3';
+
+    const html = `
+      <a
+        href="/professor/${prof.id}"
+        class="professor-card group flex flex-col h-full bg-white rounded-xl border-2 border-gray-100 p-6 hover:border-blue-500 hover:shadow-xl transition-all cursor-pointer text-left"
+        data-name="${name.toLowerCase()}"
+        data-department="${department.toLowerCase()}"
+        data-courses="${courses.join(' ').toLowerCase()}"
+      >
+        <div class="flex items-start justify-between mb-4">
+          <div class="flex-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">${name}</h3>
+            </div>
+            <p class="text-sm text-blue-600 mt-1">${department}</p>
+          </div>
+          <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14"></path>
+            <path d="M13 5l7 7-7 7"></path>
+          </svg>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4 mb-4">
+          <div class="text-center">
+            <div class="flex items-center justify-center gap-1 mb-1">
+              <span class="text-3xl font-bold ${getRatingColor(avg_rating)}">${format1(avg_rating)}</span>
+              <svg class="w-5 h-5 text-yellow-500 fill-yellow-500" viewBox="0 0 24 24">
+                <path d="M12 17.27L18.18 21 16.54 13.97 22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path>
+              </svg>
+            </div>
+            <p class="text-xs text-gray-500">Calidad</p>
+          </div>
+          <div class="text-center border-x border-gray-200">
+            <div class="flex items-center justify-center gap-1 mb-1">
+              <span class="text-3xl font-bold text-gray-900">${format1(avg_difficulty)}</span>
+            </div>
+            <p class="text-xs text-gray-500">Dificultad</p>
+          </div>
+          <div class="text-center">
+            <div class="mb-1">
+              <span class="text-3xl font-bold text-gray-900">${retake_rate}%</span>
+            </div>
+            <p class="text-xs text-gray-500">Repetiría</p>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-gray-100 mt-auto">
+          <div class="${coursesContainerClass}">
+            ${courses.length > 0 ? `
+              <p class="text-xs font-medium text-gray-500 mb-2">Imparte:</p>
+              <div class="space-y-1">
+                ${coursesHtml}
+                ${moreCourses}
+              </div>
+            ` : ''}
+          </div>
+
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-gray-600">
+              <span class="font-medium text-blue-600">${review_count}</span> reseñas
+            </span>
+            <span class="text-blue-600 font-medium group-hover:underline">Ver detalles</span>
+          </div>
+        </div>
+      </a>
+    `;
+
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = html.trim();
+    return wrapper.firstElementChild;
+  };
+
+  const runServerSearch = async (query: string, page = 1) => {
+    if (!grid) return;
+    const slugValue = grid.dataset.slug || '';
+    const res = await fetch(`/api/university-professors-search?slug=${encodeURIComponent(slugValue)}&search=${encodeURIComponent(query)}&page=${page}&limit=${pageSize}`);
+    if (!res.ok) return;
+    const json = await res.json();
+    const results = Array.isArray(json?.data) ? json.data : [];
+    const paginationInfo = json?.pagination || {};
+    const total = Number(paginationInfo.total || results.length);
+    const currentPage = Number(paginationInfo.page || page);
+    const totalPages = Number(paginationInfo.totalPages || 1);
+
+    grid.innerHTML = '';
+    results.forEach((prof: any) => {
+      const card = renderCard(prof);
+      if (card) grid.appendChild(card);
+    });
+
+    updateCountText(total);
+    updateVisibility(results.length);
+    renderSearchPagination(total, currentPage, totalPages);
+  };
+
+  document.addEventListener('search-professors', ((e: CustomEvent) => {
+    const query = String(e.detail || '').toLowerCase().trim();
+
+    if (!query) {
+      if (grid) grid.innerHTML = originalHtml;
+      updateCountText(originalTotal);
+      updateVisibility(originalTotal);
+      if (pagination) pagination.innerHTML = originalPaginationHtml;
+      updatePaginationVisibility(originalTotal > pageSize);
+      isSearching = false;
+      currentSearchQuery = '';
+      return;
+    }
+
+    isSearching = true;
+    currentSearchQuery = query;
+    runServerSearch(query, 1);
+  }) as EventListener);
+
+  if (pagination) {
+    pagination.addEventListener('click', (event) => {
+      if (!isSearching) return;
+      const target = event.target as HTMLElement;
+      const button = target.closest('button[data-page]') as HTMLButtonElement | null;
+      if (!button || button.disabled) return;
+      const page = Number(button.dataset.page || 1);
+      if (Number.isNaN(page) || page < 1) return;
+      runServerSearch(currentSearchQuery, page);
+    });
+  }
+
+  const suggestBtn = document.getElementById('suggest-btn');
+  const modal = document.getElementById('add-modal');
+  if (suggestBtn && modal) {
+      suggestBtn.addEventListener('click', () => {
+          modal.classList.remove('hidden');
+      });
+  }
+
+  const clearBtn = document.getElementById('clear-filters-btn');
+  if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        const input = document.getElementById('professor-search') as HTMLInputElement;
+        if(input) {
+            input.value = '';
+            input.focus();
+        }
+
+        document.dispatchEvent(new CustomEvent('search-professors', { detail: '' }));
+      });
+  }
+
+</script>
