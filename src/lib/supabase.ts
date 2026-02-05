@@ -8,4 +8,9 @@ export const supabaseServer = createClient(
 export const supabaseClient = createClient(
   import.meta.env.SUPABASE_URL!,
   import.meta.env.SUPABASE_ANON_KEY!,
+   {
+    auth: {
+      flowType: "pkce",
+    },
+  },
 );
