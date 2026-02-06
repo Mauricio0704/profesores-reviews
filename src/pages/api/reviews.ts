@@ -6,7 +6,6 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   const professor_id = formData.get("professor_id")?.toString();
   const university_id = formData.get("university_id")?.toString();
   const course_id = formData.get("course_id")?.toString() || null;
-  const new_course_code = formData.get("new_course_code")?.toString().trim();
   const new_course_name = formData.get("new_course_name")?.toString().trim();
   const comment = formData.get("comment")?.toString() || null;
   const difficulty = Number(formData.get("difficulty"));
@@ -50,7 +49,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
 
   let resolvedCourseId = course_id || null;
 
-  if (!resolvedCourseId && new_course_code && new_course_name) {
+  if (!resolvedCourseId && new_course_name) {
     if (!university_id) {
       return new Response("university_id is required to create a course", { status: 400 });
     }
@@ -59,7 +58,6 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
       .from("courses")
       .insert([
         {
-          code: new_course_code,
           name: new_course_name,
           university_id,
         },

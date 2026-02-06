@@ -1,5 +1,5 @@
 ---
-import { UserPlus, X, CircleAlert, Loader } from '@lucide/astro';
+import { UserPlus, X, CircleAlert } from '@lucide/astro';
 
 interface Props {
   universityId: number;
@@ -83,52 +83,6 @@ const { universityId } = Astro.props;
               />
             </div>
 
-            {/* Course Auto-complete Section */}
-            <div>
-                <label class="block font-medium text-gray-900 mb-2">
-                    Curso <span class="text-gray-500 font-normal">(Opcional)</span>
-                </label>
-                
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {/* Input Código */}
-                    <div class="relative sm:col-span-1">
-                        <label for="courseCode" class="block text-sm text-gray-600 mb-1">Código</label>
-                        <input
-                            id="courseCode"
-                            name="course_code"
-                            type="text"
-                            autocomplete="off"
-                            placeholder="Ej. TC1033"
-                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent uppercase"
-                        />
-                        {/* Dropdown Código */}
-                        <ul id="code-dropdown" class="hidden absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto"></ul>
-                    </div>
-
-                    {/* Input Nombre */}
-                    <div class="relative sm:col-span-2">
-                        <label for="courseName" class="block text-sm text-gray-600 mb-1">Nombre</label>
-                        <input
-                            id="courseName"
-                            name="course_name"
-                            type="text"
-                            autocomplete="off"
-                            placeholder="Ej. Pensamiento Computacional"
-                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        />
-                        {/* Spinner de carga */}
-                        <div id="course-loading" class="hidden absolute right-3 top-9.5">
-                            <Loader class="w-5 h-5 text-indigo-500 animate-spin" />
-                        </div>
-                        {/* Dropdown Nombre */}
-                        <ul id="name-dropdown" class="hidden absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto"></ul>
-                    </div>
-                </div>
-                <p class="text-sm text-gray-500 mt-2">
-                    Escribe el código o nombre para buscar cursos existentes.
-                </p>
-            </div>
-
             {/* Buttons */}
             <div class="flex gap-4 pt-2 pb-2">
                 <button
@@ -158,11 +112,6 @@ const { universityId } = Astro.props;
   const form = document.getElementById('add-form') as HTMLFormElement;
   const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
 
-  const courseCodeInput = document.getElementById('courseCode') as HTMLInputElement;
-  const courseNameInput = document.getElementById('courseName') as HTMLInputElement;
-  const codeDropdown = document.getElementById('code-dropdown') as HTMLUListElement;
-  const nameDropdown = document.getElementById('name-dropdown') as HTMLUListElement;
-  const loadingIndicator = document.getElementById('course-loading');
   const universityIdInput = document.getElementById('university-id-input') as HTMLInputElement;
   const departmentSelect = document.getElementById('department') as HTMLSelectElement;
   const customDepartmentField = document.getElementById('custom-department-field') as HTMLDivElement;
@@ -174,7 +123,6 @@ const { universityId } = Astro.props;
     if (form) form.reset();
     if (customDepartmentField) customDepartmentField.classList.add('hidden');
     if (customDepartmentInput) customDepartmentInput.required = false;
-    hideDropdowns();
   };
 
   closeBtn?.addEventListener('click', closeModal);
@@ -242,95 +190,6 @@ const { universityId } = Astro.props;
 
   departmentSelect?.addEventListener('change', toggleCustomDepartment);
 
-  function debounce(func: Function, wait: number) {
-    let timeout: any;
-    return function executedFunction(...args: any[]) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
-  }
-
-  function hideDropdowns() {
-    codeDropdown.classList.add('hidden');
-    nameDropdown.classList.add('hidden');
-    codeDropdown.innerHTML = '';
-    nameDropdown.innerHTML = '';
-  }
-
-  function selectCourse(code: string, name: string) {
-    courseCodeInput.value = code;
-    courseNameInput.value = name;
-    hideDropdowns();
-  }
-
-  async function searchCourses(query: string, targetDropdown: HTMLUListElement) {
-    if (query.length < 2) {
-      hideDropdowns();
-      return;
-    }
-
-    loadingIndicator?.classList.remove('hidden');
-
-    try {
-      const uniId = universityIdInput.value;
-      const res = await fetch(`/api/courses/search?q=${encodeURIComponent(query)}&university_id=${uniId}`);
-      const courses = await res.json();
-
-      targetDropdown.innerHTML = '';
-
-      if (courses.length > 0) {
-        courses.forEach((course: any) => {
-          const li = document.createElement('li');
-          li.className = 'px-4 py-3 hover:bg-indigo-50 cursor-pointer border-b border-gray-100 last:border-0';
-          li.innerHTML = `
-            <div class="flex justify-between items-center">
-                <span class="font-medium text-gray-900">${course.code}</span>
-                <span class="text-sm text-gray-600 truncate ml-4">${course.name}</span>
-            </div>
-          `;
-          
-          li.addEventListener('click', () => {
-            selectCourse(course.code, course.name);
-          });
-          
-          targetDropdown.appendChild(li);
-        });
-        targetDropdown.classList.remove('hidden');
-      } else {
-        targetDropdown.classList.add('hidden');
-      }
-    } catch (error) {
-      console.error("Error buscando cursos", error);
-    } finally {
-      loadingIndicator?.classList.add('hidden');
-    }
-  }
-
-  const handleCodeSearch = debounce((e: Event) => {
-    const target = e.target as HTMLInputElement;
-    searchCourses(target.value, codeDropdown);
-  }, 300);
-
-  const handleNameSearch = debounce((e: Event) => {
-    const target = e.target as HTMLInputElement;
-    searchCourses(target.value, nameDropdown);
-  }, 300);
-
-  courseCodeInput?.addEventListener('input', handleCodeSearch);
-  courseNameInput?.addEventListener('input', handleNameSearch);
-
-  document.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement;
-    if (!courseCodeInput.contains(target) && !codeDropdown.contains(target) && 
-        !courseNameInput.contains(target) && !nameDropdown.contains(target)) {
-      hideDropdowns();
-    }
-  });
-
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -352,11 +211,9 @@ const { universityId } = Astro.props;
     }
 
     const data = {
-        name: formData.get('name'),
-        department: departmentToSend,
-        course_code: formData.get('course_code'),
-        course_name: formData.get('course_name'),
-        university_id: formData.get('university_id')
+      name: formData.get('name'),
+      department: departmentToSend,
+      university_id: formData.get('university_id')
     };
 
     try {
