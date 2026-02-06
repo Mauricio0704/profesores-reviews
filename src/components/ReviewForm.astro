@@ -162,7 +162,7 @@ const { professorId, universityId, courses = [], professorName = 'este profesor'
         <button type="button" id="cancel-review-modal" class="flex-1 py-3 px-4 border-2 border-gray-200 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-colors">
           Cancelar
         </button>
-        <button type="submit" class="flex-1 py-3 px-4 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors">
+        <button type="submit" id="submit-review" class="flex-1 py-3 px-4 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors">
           Enviar review
         </button>
       </div>
@@ -182,6 +182,7 @@ const { professorId, universityId, courses = [], professorName = 'este profesor'
   const form = document.querySelector('#review-modal form') as HTMLFormElement | null;
   const newCourseName = document.getElementById('new_course_name') as HTMLInputElement | null;
   const newCourseNameDropdown = document.getElementById('new-course-name-dropdown') as HTMLUListElement | null;
+  const submitBtn = document.getElementById('submit-review') as HTMLButtonElement | null;
   const universityIdInput = document.querySelector('input[name="university_id"]') as HTMLInputElement | null;
   const clarity = document.getElementById('clarity') as HTMLSelectElement | null;
   const learning = document.getElementById('learning') as HTMLSelectElement | null;
@@ -364,6 +365,10 @@ const { professorId, universityId, courses = [], professorName = 'este profesor'
   });
 
   form?.addEventListener('submit', (event) => {
+    if (form?.dataset.submitting === 'true') {
+      event.preventDefault();
+      return;
+    }
     updateScores();
     if (courseSelect?.value === '__new__') {
       courseSelect.value = '';
@@ -381,7 +386,11 @@ const { professorId, universityId, courses = [], professorName = 'este profesor'
     if (!qualityInput?.value || !difficultyInput?.value) {
       event.preventDefault();
       alert('Completa todas las preguntas de calidad y dificultad con valores del 1 al 5.');
+      return;
     }
+
+    form.dataset.submitting = 'true';
+    if (submitBtn) submitBtn.disabled = true;
   });
 
   if (courses.length === 0) {
