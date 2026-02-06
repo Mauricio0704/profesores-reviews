@@ -4,7 +4,7 @@ import { X } from '@lucide/astro';
 interface Props {
   professorId: string;
   universityId?: string;
-  courses?: Array<{ id: string; name: string; code?: string | null }>;
+  courses?: Array<{ id: string; name: string }>;
   professorName?: string;
 }
 
@@ -36,7 +36,7 @@ const { professorId, universityId, courses = [], professorName = 'este profesor'
           <select name="course_id" id="course_id" class="w-full p-2.5 border border-gray-200 rounded-lg" required>
             <option value="">Seleccionar</option>
             {courses.map((c) => (
-              <option value={c.id}>{c.code ? `${c.code} — ${c.name}` : c.name}</option>
+              <option value={c.id}>{c.name}</option>
             ))}
             <option value="__new__">Agregar curso</option>
           </select>
@@ -57,15 +57,19 @@ const { professorId, universityId, courses = [], professorName = 'este profesor'
           <span class="text-sm text-slate-700">Registrar curso nuevo</span>
         </label>
         <div id="new-course-fields" class="mt-3 hidden space-y-3">
-          <div>
-            <label class="block text-sm font-semibold text-slate-700 mb-1" for="new_course_code">Código del curso</label>
-            <input type="text" name="new_course_code" id="new_course_code" class="w-full p-2.5 border border-gray-200 rounded-lg" placeholder="Ej. MAT101" />
-          </div>
-          <div>
+          <div class="relative">
             <label class="block text-sm font-semibold text-slate-700 mb-1" for="new_course_name">Nombre del curso</label>
-            <input type="text" name="new_course_name" id="new_course_name" class="w-full p-2.5 border border-gray-200 rounded-lg" placeholder="Ej. Cálculo I" />
+            <input
+              type="text"
+              name="new_course_name"
+              id="new_course_name"
+              class="w-full p-2.5 border border-gray-200 rounded-lg"
+              placeholder="Ej. Cálculo I"
+              autocomplete="off"
+            />
+            <ul id="new-course-name-dropdown" class="hidden absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto"></ul>
           </div>
-          <p class="text-xs text-slate-500">Si registras un curso nuevo, se usará en esta review.</p>
+          <p class="text-xs text-slate-500">Si registras un curso nuevo, se usará en esta review. Escribe el nombre para ver cursos existentes.</p>
         </div>
       </div>
 
@@ -176,8 +180,9 @@ const { professorId, universityId, courses = [], professorName = 'este profesor'
   const toggle = document.getElementById('new-course-toggle') as HTMLInputElement | null;
   const fields = document.getElementById('new-course-fields');
   const form = document.querySelector('#review-modal form') as HTMLFormElement | null;
-  const newCourseCode = document.getElementById('new_course_code') as HTMLInputElement | null;
   const newCourseName = document.getElementById('new_course_name') as HTMLInputElement | null;
+  const newCourseNameDropdown = document.getElementById('new-course-name-dropdown') as HTMLUListElement | null;
+  const universityIdInput = document.querySelector('input[name="university_id"]') as HTMLInputElement | null;
   const clarity = document.getElementById('clarity') as HTMLSelectElement | null;
   const learning = document.getElementById('learning') as HTMLSelectElement | null;
   const workload = document.getElementById('workload') as HTMLSelectElement | null;
@@ -217,16 +222,25 @@ const { professorId, universityId, courses = [], professorName = 'este profesor'
     if (!fields) return;
     fields.classList.remove('hidden');
     if (toggle) toggle.checked = true;
-    if (newCourseCode) newCourseCode.required = true;
     if (newCourseName) newCourseName.required = true;
+    if (courseSelect && courseSelect.querySelector('option[value="__new__"]')) {
+      courseSelect.value = '__new__';
+    }
+    if (courseSelect) {
+      courseSelect.disabled = true;
+      courseSelect.required = false;
+    }
   };
 
   const hideNewCourseFields = () => {
     if (!fields) return;
     fields.classList.add('hidden');
     if (toggle) toggle.checked = false;
-    if (newCourseCode) newCourseCode.required = false;
     if (newCourseName) newCourseName.required = false;
+    if (courseSelect) {
+      courseSelect.disabled = false;
+      courseSelect.required = true;
+    }
   };
 
   if (toggle && fields) {
@@ -247,6 +261,83 @@ const { professorId, universityId, courses = [], professorName = 'este profesor'
       showNewCourseFields();
     } else {
       hideNewCourseFields();
+    }
+  });
+
+  function debounce(func: Function, wait: number) {
+    let timeout: number | undefined;
+    return function executedFunction(...args: any[]) {
+      window.clearTimeout(timeout);
+      timeout = window.setTimeout(() => func(...args), wait);
+    };
+  }
+
+  const hideCourseDropdowns = () => {
+    newCourseNameDropdown?.classList.add('hidden');
+    if (newCourseNameDropdown) newCourseNameDropdown.innerHTML = '';
+  };
+
+  const selectSuggestedCourse = (name: string) => {
+    if (newCourseName) newCourseName.value = name || '';
+    hideCourseDropdowns();
+  };
+
+  const normalizeSearch = (value: string) =>
+    value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+
+  const searchCourses = async (query: string, targetDropdown: HTMLUListElement) => {
+    const uniId = universityIdInput?.value;
+    const normalizedQuery = normalizeSearch(query);
+    if (!uniId || normalizedQuery.length < 2) {
+      hideCourseDropdowns();
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/courses/search?q=${encodeURIComponent(normalizedQuery)}&university_id=${encodeURIComponent(uniId)}`);
+      const results = await res.json();
+      targetDropdown.innerHTML = '';
+
+      if (Array.isArray(results) && results.length > 0) {
+        results.forEach((course: any) => {
+          const li = document.createElement('li');
+          li.className = 'px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-0';
+          const name = course.name ? String(course.name) : '';
+          li.innerHTML = `
+            <div class="flex justify-between items-center">
+              <span class="font-medium text-gray-900">${name || '—'}</span>
+            </div>
+          `;
+          li.addEventListener('click', () => selectSuggestedCourse(name));
+          targetDropdown.appendChild(li);
+        });
+        targetDropdown.classList.remove('hidden');
+      }
+    } catch (error) {
+      console.error('Error buscando cursos', error);
+    }
+  };
+
+  const handleNewCourseNameSearch = debounce((e: Event) => {
+    if (!newCourseNameDropdown) return;
+    const target = e.target as HTMLInputElement;
+    searchCourses(target.value, newCourseNameDropdown);
+  }, 300);
+
+  newCourseName?.addEventListener('input', handleNewCourseNameSearch);
+
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (
+      newCourseName &&
+      newCourseNameDropdown &&
+      !newCourseName.contains(target) &&
+      !newCourseNameDropdown.contains(target)
+    ) {
+      hideCourseDropdowns();
     }
   });
 
@@ -274,12 +365,15 @@ const { professorId, universityId, courses = [], professorName = 'este profesor'
 
   form?.addEventListener('submit', (event) => {
     updateScores();
-    if (courses.length > 0 && !courseSelect?.value && !newCourseCode?.value && !newCourseName?.value) {
+    if (courseSelect?.value === '__new__') {
+      courseSelect.value = '';
+    }
+    if (courses.length > 0 && !courseSelect?.value && !newCourseName?.value) {
       event.preventDefault();
       alert('Selecciona un curso o agrega uno nuevo.');
       return;
     }
-    if (courses.length === 0 && (!newCourseCode?.value || !newCourseName?.value)) {
+    if (courses.length === 0 && !newCourseName?.value) {
       event.preventDefault();
       alert('Debes agregar un curso nuevo para continuar.');
       return;

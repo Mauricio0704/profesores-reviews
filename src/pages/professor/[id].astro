@@ -24,7 +24,7 @@ const universityId = professor.universities?.id;
 
 const { data: professorCourses, error: professorCoursesError } = await supabaseServer
     .from('professor_courses')
-    .select('courses(id, name, code)')
+    .select('courses(id, name)')
     .eq('professor_id', id);
 
 const professorCoursesList = professorCoursesError
@@ -36,7 +36,7 @@ const professorCoursesList = professorCoursesError
 
 const { data: reviews, error: reviewsError } = await supabaseServer
     .from('reviews')
-    .select('id, professor_id, course_id, comment, created_at, difficulty, quality, would_recommend, courses(name, code)')
+    .select('id, professor_id, course_id, comment, created_at, difficulty, quality, would_recommend, courses(name)')
     .eq('professor_id', id)
     .order('created_at', { ascending: false });
 
@@ -105,7 +105,6 @@ const reviewCards = professorReviews.map((review: any) => ({
     difficulty: review.difficulty,
     quality: review.quality,
     would_recommend: review.would_recommend,
-    course_code: review.courses?.code ?? null,
     course_name: review.courses?.name ?? null,
     upvotes: voteSummary[String(review.id)]?.up ?? 0,
     downvotes: voteSummary[String(review.id)]?.down ?? 0,

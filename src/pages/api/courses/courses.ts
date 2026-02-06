@@ -5,7 +5,7 @@ export async function GET() {
     const { data, error } = await supabaseServer
       .from("courses")
       .select(
-        "id,name,code,semester",
+        "id,name",
       );
 
     if (error) {
@@ -17,9 +17,7 @@ export async function GET() {
 
     const courses = (data || []).map((c: any) => ({
       course_id: c.id,
-      code: c.code,
       name: c.name,
-      semester: c.semester,
     }));
 
     return new Response(JSON.stringify(courses), {
