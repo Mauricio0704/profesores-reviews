@@ -139,10 +139,19 @@ const { professorId, universityId, courses = [], professorName = 'este profesor'
         <textarea name="comment" id="comment" rows="5" class="w-full p-2.5 border border-gray-200 rounded-lg" placeholder="Comparte tu experiencia (opcional)"></textarea>
       </div>
 
-      <label class="inline-flex items-center gap-2 mt-1">
-        <input type="checkbox" name="would_recommend" value="true" class="h-4 w-4" />
-        <span class="text-sm text-slate-700">Lo recomendaría</span>
-      </label>
+      <div class="mt-1">
+        <p class="text-sm font-semibold text-slate-700">¿Lo recomendarías? *</p>
+        <div class="flex items-center gap-6 mt-2">
+          <label class="inline-flex items-center gap-2">
+            <input type="radio" name="would_recommend" value="true" class="h-4 w-4" required />
+            <span class="text-sm text-slate-700">Si</span>
+          </label>
+          <label class="inline-flex items-center gap-2">
+            <input type="radio" name="would_recommend" value="false" class="h-4 w-4" required />
+            <span class="text-sm text-slate-700">No</span>
+          </label>
+        </div>
+      </div>
 
       {/* Buttons */}
       <div class="flex gap-4 pt-2">

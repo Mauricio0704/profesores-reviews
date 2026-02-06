@@ -7,15 +7,6 @@ interface Props {
 
 const { universityId } = Astro.props;
 
-const departments = [
-  "Ingeniería y Ciencias",
-  "Ciencias de la Salud",
-  "Negocios",
-  "Humanidades y Educación",
-  "Ciencias Sociales",
-  "Arquitectura, Arte y Diseño",
-  "Otro"
-];
 ---
 
 <div 
@@ -27,7 +18,7 @@ const departments = [
   <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl transform transition-all scale-100 flex flex-col max-h-[90vh]">
     
     {/* Header */}
-    <div class="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
+    <div class="flex items-center justify-between p-6 border-b border-gray-200 shrink-0">
       <div class="flex items-center gap-3">
         <div class="bg-indigo-100 rounded-xl p-2">
           <UserPlus class="w-6 h-6 text-indigo-600" />
@@ -49,7 +40,7 @@ const departments = [
 
             {/* Context Note */}
             <div class="bg-indigo-50 border-2 border-indigo-200 rounded-xl p-4 flex gap-3">
-                <CircleAlert class="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
+                <CircleAlert class="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
                 <p class="text-sm text-indigo-900 font-medium">
                 El profesor será visible inmediatamente pero será revisado por moderadores.
                 </p>
@@ -77,11 +68,19 @@ const departments = [
                 class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
                 required
                 >
-                <option value="">Selecciona un departamento</option>
-                {departments.map((dept) => (
-                    <option value={dept}>{dept}</option>
-                ))}
+              <option value="">Cargando departamentos...</option>
                 </select>
+            </div>
+
+            <div id="custom-department-field" class="hidden">
+              <label for="custom-department" class="block font-medium text-gray-900 mb-2">Agregar departamento *</label>
+              <input
+              id="custom-department"
+              name="custom_department"
+              type="text"
+              placeholder="Ej. Matemáticas"
+              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
             </div>
 
             {/* Course Auto-complete Section */}
@@ -118,7 +117,7 @@ const departments = [
                             class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         />
                         {/* Spinner de carga */}
-                        <div id="course-loading" class="hidden absolute right-3 top-[38px]">
+                        <div id="course-loading" class="hidden absolute right-3 top-9.5">
                             <Loader class="w-5 h-5 text-indigo-500 animate-spin" />
                         </div>
                         {/* Dropdown Nombre */}
@@ -165,10 +164,16 @@ const departments = [
   const nameDropdown = document.getElementById('name-dropdown') as HTMLUListElement;
   const loadingIndicator = document.getElementById('course-loading');
   const universityIdInput = document.getElementById('university-id-input') as HTMLInputElement;
+  const departmentSelect = document.getElementById('department') as HTMLSelectElement;
+  const customDepartmentField = document.getElementById('custom-department-field') as HTMLDivElement;
+  const customDepartmentInput = document.getElementById('custom-department') as HTMLInputElement;
+  let departmentsLoaded = false;
 
   const closeModal = () => {
     if (modal) modal.classList.add('hidden');
     if (form) form.reset();
+    if (customDepartmentField) customDepartmentField.classList.add('hidden');
+    if (customDepartmentInput) customDepartmentInput.required = false;
     hideDropdowns();
   };
 
@@ -177,6 +182,65 @@ const departments = [
   modal?.addEventListener('click', (e) => {
     if (e.target === modal) closeModal();
   });
+
+  const renderDepartments = (items: string[]) => {
+    if (!departmentSelect) return;
+    departmentSelect.innerHTML = '';
+
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'Selecciona un departamento';
+    departmentSelect.appendChild(placeholder);
+
+    items.forEach((dept) => {
+      const option = document.createElement('option');
+      option.value = dept;
+      option.textContent = dept;
+      departmentSelect.appendChild(option);
+    });
+
+    const other = document.createElement('option');
+    other.value = 'Agregar';
+    other.textContent = 'Agregar';
+    departmentSelect.appendChild(other);
+  };
+
+  const toggleCustomDepartment = () => {
+    if (!departmentSelect || !customDepartmentField || !customDepartmentInput) return;
+    if (departmentSelect.value === 'Agregar') {
+      customDepartmentField.classList.remove('hidden');
+      customDepartmentInput.required = true;
+    } else {
+      customDepartmentField.classList.add('hidden');
+      customDepartmentInput.required = false;
+      customDepartmentInput.value = '';
+    }
+  };
+
+  const loadDepartments = async () => {
+    if (departmentsLoaded || !departmentSelect) return;
+
+    try {
+      const uniId = universityIdInput.value;
+      const res = await fetch(`/api/university-departments?university_id=${encodeURIComponent(uniId)}`);
+      if (!res.ok) throw new Error('Failed to load departments');
+      const items = await res.json();
+      const list = Array.isArray(items) ? items : [];
+      renderDepartments(list);
+      departmentsLoaded = true;
+    } catch (error) {
+      console.error('Error cargando departamentos', error);
+      renderDepartments([]);
+      departmentsLoaded = false;
+    }
+  };
+
+  const suggestBtn = document.getElementById('suggest-btn');
+  suggestBtn?.addEventListener('click', () => {
+    loadDepartments();
+  });
+
+  departmentSelect?.addEventListener('change', toggleCustomDepartment);
 
   function debounce(func: Function, wait: number) {
     let timeout: any;
@@ -276,9 +340,20 @@ const departments = [
 
     const formData = new FormData(form);
 
+    const selectedDepartment = String(formData.get('department') || '').trim();
+    const customDepartment = String(formData.get('custom_department') || '').trim();
+    const departmentToSend = selectedDepartment === 'Agregar' ? customDepartment : selectedDepartment;
+
+    if (!departmentToSend) {
+      alert('Selecciona un departamento o escribe uno nuevo.');
+      submitBtn.textContent = originalText;
+      submitBtn.disabled = false;
+      return;
+    }
+
     const data = {
         name: formData.get('name'),
-        department: formData.get('department'),
+        department: departmentToSend,
         course_code: formData.get('course_code'),
         course_name: formData.get('course_name'),
         university_id: formData.get('university_id')
