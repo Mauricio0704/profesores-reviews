@@ -8,7 +8,6 @@ interface Review {
   difficulty?: number | null;
   quality?: number | null;
   would_recommend?: boolean | null;
-  course_code?: string | null;
   course_name?: string | null;
   semester?: string | null;
   tags?: string[] | null;
@@ -27,9 +26,7 @@ const { review } = Astro.props as Props;
 const quality = Number.isFinite(review.quality) ? Number(review.quality) : 0;
 const difficulty = Number.isFinite(review.difficulty) ? Number(review.difficulty) : 0;
 const createdAt = review.created_at ? new Date(review.created_at) : null;
-const courseLabel = review.course_code || review.course_name
-  ? `${review.course_code ? `${review.course_code} — ` : ''}${review.course_name ?? ''}`.trim()
-  : '';
+const courseLabel = review.course_name ? String(review.course_name).trim() : '';
 const upvotes = Number.isFinite(review.upvotes) ? Number(review.upvotes) : 0;
 const downvotes = Number.isFinite(review.downvotes) ? Number(review.downvotes) : 0;
 const userVote = review.user_vote ?? null;

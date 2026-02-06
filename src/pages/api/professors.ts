@@ -32,7 +32,7 @@ export const GET: APIRoute = async ({ request }) => {
         .from("courses")
         .select("id")
         .eq("university_id", university_id)
-        .or(`code.ilike.%${search}%,name.ilike.%${search}%`);
+        .ilike("name", `%${search}%`);
 
       if (matchingCourses && matchingCourses.length > 0) {
         const courseIds = matchingCourses.map((c) => c.id);
@@ -114,7 +114,7 @@ export const GET: APIRoute = async ({ request }) => {
 export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
-    const { name, department, university_id, course_name, course_code } = body;
+    const { name, department, university_id, course_name } = body;
 
     if (!name || !department || !university_id) {
       return new Response(
@@ -139,27 +139,24 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: profError.message }), { status: 500 });
     }
 
-    if (course_code) {
+    if (course_name) {
       let courseIdToLink = null;
 
       const { data: existingCourse } = await supabaseServer
         .from("courses")
         .select("id")
-        .eq("code", course_code)
+        .eq("name", course_name)
         .eq("university_id", university_id)
         .maybeSingle();
 
       if (existingCourse) {
         courseIdToLink = existingCourse.id;
       } else {
-        const newCourseName = course_name || course_code; 
-        
         const { data: createdCourse, error: createCourseError } = await supabaseServer
           .from("courses")
           .insert([
             {
-              code: course_code,
-              name: newCourseName,
+              name: course_name,
               university_id: university_id
             }
           ])
