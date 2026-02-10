@@ -54,22 +54,37 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
       return new Response("university_id is required to create a course", { status: 400 });
     }
 
-    const { data: newCourse, error: courseError } = await supabaseServer
+    const { data: existingCourse, error: existingCourseError } = await supabaseServer
       .from("courses")
-      .insert([
-        {
-          name: new_course_name,
-          university_id,
-        },
-      ])
       .select("id")
-      .single();
+      .eq("university_id", university_id)
+      .ilike("name", new_course_name)
+      .maybeSingle();
 
-    if (courseError) {
-      return new Response(courseError.message, { status: 500 });
+    if (existingCourseError) {
+      return new Response(existingCourseError.message, { status: 500 });
     }
 
-    resolvedCourseId = newCourse?.id ?? null;
+    if (existingCourse?.id) {
+      resolvedCourseId = existingCourse.id;
+    } else {
+      const { data: newCourse, error: courseError } = await supabaseServer
+        .from("courses")
+        .insert([
+          {
+            name: new_course_name,
+            university_id,
+          },
+        ])
+        .select("id")
+        .single();
+
+      if (courseError) {
+        return new Response(courseError.message, { status: 500 });
+      }
+
+      resolvedCourseId = newCourse?.id ?? null;
+    }
   }
 
   // Insert review using server client (service role) to avoid relying on anon key
