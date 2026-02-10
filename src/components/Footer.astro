@@ -1,0 +1,96 @@
+---
+import {Mail} from '@lucide/astro';
+import { boolean } from 'astro:schema';
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="bg-gray-900 text-gray-300 mt-16">
+    {/* Main Footer Content */}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {/* Brand Section */}
+        <div>
+        <div class="flex items-center gap-2 mb-4">
+            <div class="rounded-xl sm:rounded-2xl p-1 shadow-md shrink-0 transition-transform bg-gray-300">
+                <img src="/logo.png" alt="Logo" class="w-7 h-7 sm:w-9 sm:h-9" />
+            </div>
+            <span class="font-bold text-white text-lg">Es Buen Profe</span>
+        </div>
+        <p class="text-sm text-gray-400 mb-4">
+            Te ayudamos a encontrar los mejores profesores para tu carrera. Lee reseñas honestas y comparte tus experiencias.
+        </p>
+        </div>
+
+        {/* Quick Links */}
+        <div>
+        <h3 class="font-semibold text-white mb-4">Acceso Rápido</h3>
+        <ul class="space-y-2 text-sm">
+            <li>
+            <a href="/" class="hover:text-indigo-400 transition-colors">
+                Buscar Universidades
+            </a>
+            </li>
+        </ul>
+        </div>
+
+        {/* Resources 
+        <div>
+        <h3 class="font-semibold text-white mb-4">Recursos</h3>
+        <ul class="space-y-2 text-sm">
+            <li>
+            <a href="#" class="hover:text-indigo-400 transition-colors">
+                Community Guidelines
+            </a>
+            </li>
+            <li>
+            <a href="#" class="hover:text-indigo-400 transition-colors">
+                Privacy Policy
+            </a>
+            </li>
+            <li>
+            <a href="#" class="hover:text-indigo-400 transition-colors">
+                Terms of Service
+            </a>
+            </li>
+            <li>
+            <a href="#" class="hover:text-indigo-400 transition-colors">
+                Cookie Policy
+            </a>
+            </li>
+            <li>
+            <a href="#" class="hover:text-indigo-400 transition-colors">
+                Report Content
+            </a>
+            </li>
+        </ul>
+        </div>
+        */}
+
+        {/* Contact Information */}
+        <div>
+        <h3 class="font-semibold text-white mb-4">Contact Us</h3>
+        <ul class="space-y-3 text-sm">
+            <li class="flex items-start gap-3">
+            <div>
+                <p class="text-gray-400">Email</p>
+                <a href="mailto:esbuenprofe@gmail.com" class="hover:text-indigo-400 transition-colors">
+                esbuenprofe@gmail.com
+                </a>
+            </div>
+            </li>
+        </ul>
+        </div>
+    </div>
+    </div>
+
+    {/* Bottom Bar */}
+    <div class="border-t border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-400">
+        <p>
+            © {currentYear} Rate My Professor. All rights reserved.
+        </p>
+    </div>
+    </div>
+</footer>
+
