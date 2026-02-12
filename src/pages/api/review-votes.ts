@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { supabaseClient, supabaseServer } from "../../lib/supabase";
+import { supabaseClient } from "~/lib/supabase";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   let review_id: string | null = null;
@@ -50,7 +50,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const { data: existingVote, error: existingError } = await supabaseServer
+  const { data: existingVote, error: existingError } = await supabaseClient
     .from("review_votes")
     .select("id, vote")
     .eq("review_id", review_id)
@@ -65,7 +65,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
   if (existingVote) {
     if (Number(existingVote.vote) === normalizedVote) {
-      const { error: deleteError } = await supabaseServer
+      const { error: deleteError } = await supabaseClient
         .from("review_votes")
         .delete()
         .eq("id", existingVote.id);
@@ -76,7 +76,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
       userVote = null;
     } else {
-      const { error: updateError } = await supabaseServer
+      const { error: updateError } = await supabaseClient
         .from("review_votes")
         .update({ vote: normalizedVote })
         .eq("id", existingVote.id);
@@ -86,7 +86,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       }
     }
   } else {
-    const { error: insertError } = await supabaseServer
+    const { error: insertError } = await supabaseClient
       .from("review_votes")
       .insert([
         {
@@ -101,13 +101,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
   }
 
-  const { count: upvotes } = await supabaseServer
+  const { count: upvotes } = await supabaseClient
     .from("review_votes")
     .select("id", { count: "exact", head: true })
     .eq("review_id", review_id)
     .eq("vote", 1);
 
-  const { count: downvotes } = await supabaseServer
+  const { count: downvotes } = await supabaseClient
     .from("review_votes")
     .select("id", { count: "exact", head: true })
     .eq("review_id", review_id)

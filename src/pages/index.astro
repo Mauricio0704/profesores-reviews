@@ -1,10 +1,10 @@
 ---
-import Layout from '../layouts/Layout.astro';
+import Layout from '~/layouts/Layout.astro';
 import UniversityCard from '~/components/UniversityCard.astro';
 import UniversitySearch from '~/components/UniversitySearch.astro';
-import { supabaseServer } from '../lib/supabase';
+import { supabaseClient } from '~/lib/supabase';
 
-const { data, error } = await supabaseServer
+const { data, error } = await supabaseClient
   .from('university_stats')
   .select('id, name, slug, professor_count, review_count, avg_rating, department_count')
   .order('review_count', { ascending: false });

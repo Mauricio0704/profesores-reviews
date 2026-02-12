@@ -1,8 +1,8 @@
-import { supabaseServer } from "../../../lib/supabase";
+import { supabaseClient } from "~/lib/supabase";
 
 export async function GET() {
   try {
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabaseClient
       .from("courses")
       .select(
         "id,name",
