@@ -1,0 +1,49 @@
+---
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="bg-gray-900 text-gray-300 mt-16 flex justify-center">
+    {/* Main Footer Content */}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 justify-items-center">
+        {/* Brand Section */}
+        <div>
+        <div class="flex items-center gap-2 mb-4">
+            <div class="rounded-xl sm:rounded-2xl p-1 shadow-md shrink-0 transition-transform bg-gray-300">
+                <img src="/logo.png" alt="Logo" class="w-7 h-7 sm:w-9 sm:h-9" />
+            </div>
+            <span class="font-bold text-white text-lg">Es Buen Profe</span>
+        </div>
+        <p class="text-sm text-gray-400 mb-4">
+            Te ayudamos a encontrar los mejores profesores para tu carrera. Lee reseñas honestas y comparte tus experiencias.
+        </p>
+        </div>
+
+        {/* Contact Information */}
+        <div>
+        <h3 class="font-semibold text-white mb-4">Contáctanos</h3>
+        <ul class="space-y-3 text-sm">
+            <li class="flex items-start gap-3">
+            <div>
+                <p class="text-gray-400">Email</p>
+                <a href="mailto:esbuenprofe@gmail.com" class="hover:text-indigo-400 transition-colors">
+                esbuenprofe@gmail.com
+                </a>
+            </div>
+            </li>
+        </ul>
+        </div>
+    </div>
+    </div>
+
+    {/* Bottom Bar 
+    <div class="border-t border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-400">
+        <p>
+            © {currentYear} EsBuenProfe. All rights reserved.
+        </p>
+    </div>
+    </div>
+    */}
+</footer>
