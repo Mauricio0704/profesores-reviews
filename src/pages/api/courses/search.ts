@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { supabaseServer } from "../../../lib/supabase";
+import { supabaseClient } from "~/lib/supabase";
 
 export const GET: APIRoute = async ({ request }) => {
   const url = new URL(request.url);
@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify([]), { status: 200 });
   }
 
-  const { data, error } = await supabaseServer
+  const { data, error } = await supabaseClient
     .from("courses")
     .select("id, name")
     .eq("university_id", universityId)
@@ -38,7 +38,7 @@ export const GET: APIRoute = async ({ request }) => {
     });
   }
 
-  const { data: allCourses, error: allError } = await supabaseServer
+  const { data: allCourses, error: allError } = await supabaseClient
     .from("courses")
     .select("id, name")
     .eq("university_id", universityId);

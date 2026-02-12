@@ -1,4 +1,4 @@
-import { supabaseServer } from "../../lib/supabase";
+import { supabaseClient } from "~/lib/supabase";
 import type { APIRoute } from "astro";
 
 export const GET: APIRoute = async ({ request }) => {
@@ -28,7 +28,7 @@ export const GET: APIRoute = async ({ request }) => {
     let professorIdsFromCourseSearch: number[] = [];
 
     if (search) {
-      const { data: matchingCourses } = await supabaseServer
+      const { data: matchingCourses } = await supabaseClient
         .from("courses")
         .select("id")
         .eq("university_id", university_id)
@@ -37,7 +37,7 @@ export const GET: APIRoute = async ({ request }) => {
       if (matchingCourses && matchingCourses.length > 0) {
         const courseIds = matchingCourses.map((c) => c.id);
 
-        const { data: profsInCourses } = await supabaseServer
+        const { data: profsInCourses } = await supabaseClient
           .from("professor_courses")
           .select("professor_id")
           .in("course_id", courseIds);
@@ -48,7 +48,7 @@ export const GET: APIRoute = async ({ request }) => {
       }
     }
 
-    let query = supabaseServer
+    let query = supabaseClient
       .from("professors")
       .select("id, name, department, reviews_count")
       .eq("university_id", university_id);
@@ -64,7 +64,7 @@ export const GET: APIRoute = async ({ request }) => {
     }
 
     if (course_id) {
-      const { data: profsWithCourse } = await supabaseServer
+      const { data: profsWithCourse } = await supabaseClient
         .from("professor_courses")
         .select("professor_id")
         .eq("course_id", course_id);
@@ -123,7 +123,7 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    const { data: newProfessor, error: profError } = await supabaseServer
+    const { data: newProfessor, error: profError } = await supabaseClient
       .from("professors")
       .insert([
         {
@@ -142,7 +142,7 @@ export const POST: APIRoute = async ({ request }) => {
     if (course_name) {
       let courseIdToLink = null;
 
-      const { data: existingCourse } = await supabaseServer
+      const { data: existingCourse } = await supabaseClient
         .from("courses")
         .select("id")
         .eq("name", course_name)
@@ -152,7 +152,7 @@ export const POST: APIRoute = async ({ request }) => {
       if (existingCourse) {
         courseIdToLink = existingCourse.id;
       } else {
-        const { data: createdCourse, error: createCourseError } = await supabaseServer
+        const { data: createdCourse, error: createCourseError } = await supabaseClient
           .from("courses")
           .insert([
             {
@@ -171,7 +171,7 @@ export const POST: APIRoute = async ({ request }) => {
       }
 
       if (courseIdToLink) {
-        const { error: linkError } = await supabaseServer
+        const { error: linkError } = await supabaseClient
           .from("professor_courses")
           .insert([
             {

@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { supabaseServer, supabaseClient } from "../../lib/supabase";
+import { supabaseClient } from "~/lib/supabase";
 
 export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   const formData = await request.formData();
@@ -54,7 +54,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
       return new Response("university_id is required to create a course", { status: 400 });
     }
 
-    const { data: existingCourse, error: existingCourseError } = await supabaseServer
+    const { data: existingCourse, error: existingCourseError } = await supabaseClient
       .from("courses")
       .select("id")
       .eq("university_id", university_id)
@@ -68,7 +68,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     if (existingCourse?.id) {
       resolvedCourseId = existingCourse.id;
     } else {
-      const { data: newCourse, error: courseError } = await supabaseServer
+      const { data: newCourse, error: courseError } = await supabaseClient
         .from("courses")
         .insert([
           {
@@ -87,8 +87,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     }
   }
 
-  // Insert review using server client (service role) to avoid relying on anon key
-  const { error } = await supabaseServer.from("reviews").insert([
+  const { error } = await supabaseClient.from("reviews").insert([
     {
       user_id: userId,
       professor_id,
@@ -105,7 +104,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   }
 
   if (resolvedCourseId) {
-    const { data: existingLink, error: linkCheckError } = await supabaseServer
+    const { data: existingLink, error: linkCheckError } = await supabaseClient
       .from("professor_courses")
       .select("professor_id")
       .eq("professor_id", professor_id)
@@ -117,7 +116,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     }
 
     if (!existingLink) {
-      const { error: linkInsertError } = await supabaseServer
+      const { error: linkInsertError } = await supabaseClient
         .from("professor_courses")
         .insert([
           {

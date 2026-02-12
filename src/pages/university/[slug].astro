@@ -1,17 +1,17 @@
 ---
-import Layout from "../../layouts/Layout.astro";
-import BackButton from "../../components/BackButton.astro";
-import ProfessorSearch from "../../components/ProfessorSearch.astro";
-import ProfessorCard from "../../components/ProfessorCard.astro";
+import Layout from "~/layouts/Layout.astro";
+import BackButton from "~/components/BackButton.astro";
+import ProfessorSearch from "~/components/ProfessorSearch.astro";
+import ProfessorCard from "~/components/ProfessorCard.astro";
 import AddProfessorModal from "~/components/AddProfessorModal.astro";
-import { supabaseServer } from "../../lib/supabase";
+import { supabaseClient } from "~/lib/supabase";
 import { Star, UserPlus } from '@lucide/astro';
 
 const { slug } = Astro.params;
 const PAGE_SIZE = 12;
 const currentPage = Math.max(1, Number(Astro.url.searchParams.get("page") || 1));
 
-const { data: university, error } = await supabaseServer
+const { data: university, error } = await supabaseClient
   .from("universities")
   .select("id, name, slug")
   .eq("slug", slug)
@@ -24,7 +24,7 @@ if (error || !university) {
 const rangeStart = (currentPage - 1) * PAGE_SIZE;
 const rangeEnd = rangeStart + PAGE_SIZE - 1;
 
-const { data: professors, error: professorsError, count } = await supabaseServer
+const { data: professors, error: professorsError, count } = await supabaseClient
   .from("university_professor_stats_full_search")
   .select(
     "id, name, department, avg_rating, avg_difficulty, retake_rate, review_count, matching_courses",
