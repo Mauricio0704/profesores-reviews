@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { supabaseClient } from "../../../lib/supabase";
+import { supabaseClient } from "~/lib/supabase";
 
 const sanitizeReturnTo = (value: string | null): string => {
   const fallback = "/";

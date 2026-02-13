@@ -1,6 +1,6 @@
 ---
-import { supabaseServer, supabaseClient } from "~/lib/supabase";
-import Layout from "../../layouts/Layout.astro";
+import { supabaseClient } from "~/lib/supabase";
+import Layout from "~/layouts/Layout.astro";
 import ReviewForm from "~/components/ReviewForm.astro";
 import ProfessorDetails from "~/components/ProfessorDetails.astro";
 const { id } = Astro.params;
@@ -9,20 +9,20 @@ if (!id) {
     return Astro.redirect('/404');
 }
 
-const { data: professor, error } = await supabaseServer
+const { data: professor, error } = await supabaseClient
     .from('professors')
     .select('id, name, department, universities(id, slug)')
     .eq('id', id)
     .single();
 
 if (error || !professor) {
-        return Astro.redirect('/404');
+    return Astro.redirect('/404');
 }
 
 const universitySlug = professor.universities?.slug;
 const universityId = professor.universities?.id;
 
-const { data: professorCourses, error: professorCoursesError } = await supabaseServer
+const { data: professorCourses, error: professorCoursesError } = await supabaseClient
     .from('professor_courses')
     .select('courses(id, name)')
     .eq('professor_id', id);
@@ -34,7 +34,7 @@ const professorCoursesList = professorCoursesError
         .filter(Boolean)
         .sort((a: any, b: any) => String(a.name || '').localeCompare(String(b.name || '')));
 
-const { data: reviews, error: reviewsError } = await supabaseServer
+const { data: reviews, error: reviewsError } = await supabaseClient
     .from('reviews')
     .select('id, professor_id, course_id, comment, created_at, difficulty, quality, would_recommend, courses(name)')
     .eq('professor_id', id)
@@ -57,7 +57,7 @@ if (accessToken && refreshToken) {
 const reviewIds = professorReviews.map((review: any) => review.id).filter(Boolean);
 
 const { data: reviewVotes, error: reviewVotesError } = reviewIds.length
-    ? await supabaseServer
+    ? await supabaseClient
         .from('review_votes')
         .select('review_id, vote, user_id')
         .in('review_id', reviewIds)

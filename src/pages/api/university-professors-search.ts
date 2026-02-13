@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { supabaseServer } from "~/lib/supabase";
+import { supabaseClient } from "~/lib/supabase";
 
 const MAX_RESULTS = 5000;
 const DEFAULT_PAGE_SIZE = 12;
@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ url }) => {
     });
   }
 
-  let query = supabaseServer
+  let query = supabaseClient
     .from("university_professor_stats_full_search")
     .select(
       "id, name, department, avg_rating, avg_difficulty, retake_rate, review_count, matching_courses",
