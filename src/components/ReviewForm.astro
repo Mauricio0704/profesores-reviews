@@ -109,14 +109,14 @@ const { professorId, universityId, courses = [], professorName = 'este profesor'
           <p class="text-xs text-slate-500">Se calculará como: dificultad = (carga + (6 - justicia)) / 2.</p>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
             <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-1" for="workload">Carga de trabajo semanal fuera de clases</label>
+              <label class="block text-sm font-semibold text-slate-700 mb-1" for="workload">Carga de trabajo</label>
               <select id="workload" class="w-full p-2.5 border border-gray-200 rounded-lg" required>
                 <option value="">Seleccionar (1-5)</option>
-                <option value="1">1 — 4 horas o menos</option>
-                <option value="2">2 — Entre 5 y 8 horas</option>
-                <option value="3">3 — Entre 9 y 12 horas</option>
-                <option value="4">4 — Entre 13 y 16 horas</option>
-                <option value="5">5 — Más de 16 horas</option>
+                <option value="1">1 — Muy poca</option>
+                <option value="2">2 — Poca</option>
+                <option value="3">3 — Neutral</option>
+                <option value="4">4 — Bastante</option>
+                <option value="5">5 — Mucha</option>
               </select>
             </div>
             <div>
