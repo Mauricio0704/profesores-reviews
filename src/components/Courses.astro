@@ -1,12 +1,12 @@
-<div id="courses-root" class="font-sans">Loading courses...</div>
+<div id="courses-root" class="font-sans">Cargando cursos...</div>
 
 <script type="module" is:inline>
   const root = document.getElementById("courses-root");
   if (!root) {
-    console.error("Courses root not found");
+    console.error("No se encontró la raíz de cursos");
   } else {
     async function load() {
-      root.textContent = "Loading courses...";
+      root.textContent = "Cargando cursos...";
       try {
         const res = await fetch("/api/courses");
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -25,7 +25,7 @@
           root.appendChild(el);
         });
       } catch (err) {
-        root.textContent = "Failed to load courses.";
+        root.textContent = "Error al cargar los cursos.";
         console.error(err);
       }
     }

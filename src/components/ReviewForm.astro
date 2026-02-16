@@ -17,7 +17,7 @@ const { professorId, universityId, courses = [], professorName = 'este profesor'
     <div class="flex items-center justify-between p-6 border-b border-gray-200">
       <div>
         <h2 class="text-2xl font-bold text-gray-900">Calificar a {professorName}</h2>
-        <p class="text-sm text-gray-500 mt-1">Tu review se publicará de forma anónima</p>
+        <p class="text-sm text-gray-500 mt-1">Tu reseña se publicará de forma anónima</p>
       </div>
       <button id="close-review-modal" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" type="button">
         <X class="w-5 h-5 text-gray-500" />
@@ -69,7 +69,7 @@ const { professorId, universityId, courses = [], professorName = 'este profesor'
             />
             <ul id="new-course-name-dropdown" class="hidden absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto"></ul>
           </div>
-          <p class="text-xs text-slate-500">Si registras un curso nuevo, se usará en esta review. Escribe el nombre para ver cursos existentes.</p>
+          <p class="text-xs text-slate-500">Si registras un curso nuevo, se usará en esta reseña. Escribe el nombre para ver cursos existentes.</p>
         </div>
       </div>
 
@@ -163,7 +163,7 @@ const { professorId, universityId, courses = [], professorName = 'este profesor'
           Cancelar
         </button>
         <button type="submit" id="submit-review" class="flex-1 py-3 px-4 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors">
-          Enviar review
+          Enviar reseña
         </button>
       </div>
     </form>

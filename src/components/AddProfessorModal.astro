@@ -186,7 +186,7 @@ const { universityId } = Astro.props;
     try {
       const uniId = universityIdInput.value;
       const res = await fetch(`/api/university-departments?university_id=${encodeURIComponent(uniId)}`);
-      if (!res.ok) throw new Error('Failed to load departments');
+      if (!res.ok) throw new Error('Error al cargar departamentos');
       const items = await res.json();
       const list = Array.isArray(items) ? items : [];
       renderDepartments(list);

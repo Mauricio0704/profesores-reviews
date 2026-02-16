@@ -7,7 +7,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   const password = formData.get("password")?.toString();
 
   if (!email || !password) {
-    return new Response("Email and password are required", { status: 400 });
+    return new Response("Se requieren email y contraseña", { status: 400 });
   }
 
   const { data, error } = await supabaseClient.auth.signUp({
@@ -26,7 +26,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     });
 
     if (signIn.error || !signIn.data.session) {
-      return new Response("Account created but sign-in failed", { status: 500 });
+      return new Response("Cuenta creada pero fallo el inicio de sesión", { status: 500 });
     }
 
     const { access_token, refresh_token } = signIn.data.session;

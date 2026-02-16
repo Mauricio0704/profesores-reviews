@@ -14,11 +14,11 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   const would_recommend = would_recommend_raw === "on" || would_recommend_raw === "true";
 
   if (!professor_id) {
-    return new Response("professor_id is required", { status: 400 });
+    return new Response("Se requiere professor_id", { status: 400 });
   }
 
   if (!Number.isFinite(difficulty) || !Number.isFinite(quality)) {
-    return new Response("difficulty and quality must be numeric", { status: 400 });
+    return new Response("difficulty y quality deben ser numéricos", { status: 400 });
   }
 
   // Validate and establish session from cookies (ensure user is signed in)
@@ -51,7 +51,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
 
   if (!resolvedCourseId && new_course_name) {
     if (!university_id) {
-      return new Response("university_id is required to create a course", { status: 400 });
+      return new Response("Se requiere university_id para crear un curso", { status: 400 });
     }
 
     const { data: existingCourse, error: existingCourseError } = await supabaseClient
@@ -132,5 +132,5 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   }
 
   // Redirect back to professor page
-  return redirect(`/professor/${professor_id}`);
+  return redirect(`/profesores/${professor_id}`);
 };

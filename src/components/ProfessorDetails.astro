@@ -40,7 +40,7 @@ const {
   backHref,
   backText = 'Volver a todos los profesores',
   addReviewHref,
-  addReviewText = 'Añadir review',
+  addReviewText = 'Añadir reseña',
 } = Astro.props as Props;
 
 const getRatingColor = (rating: number) => {
@@ -146,7 +146,7 @@ const filledStars = Math.round(overallRating);
       <h2 class="text-2xl font-bold text-gray-900">Reseñas</h2>
       <div class="flex items-center gap-4">
         <span class="text-sm font-medium text-blue-600">
-          {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
+          {reviews.length} {reviews.length === 1 ? 'reseña' : 'reseñas'}
         </span>
         {addReviewHref ? (
           <a
@@ -195,7 +195,7 @@ const filledStars = Math.round(overallRating);
             class="inline-flex items-center gap-2 bg-blue-600 text-white font-medium py-2.5 px-5 rounded-xl hover:bg-blue-700 transition-colors"
           >
             <Plus class="w-5 h-5" />
-            Escribir review
+            Escribir reseña
           </button>
         )}
       </div>

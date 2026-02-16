@@ -9,7 +9,7 @@ export const GET: APIRoute = async ({ request }) => {
     // Validación básica
     const university_id = params.get("university_id");
     if (!university_id) {
-      return new Response(JSON.stringify({ error: "university_id is required" }), {
+      return new Response(JSON.stringify({ error: "Se requiere university_id" }), {
         status: 400,
         headers: { "content-type": "application/json" },
       });
