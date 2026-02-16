@@ -5,7 +5,7 @@ interface Props {
   placeholder?: string;
 }
 
-const { placeholder = "Search professors by name, department, or course..." } = Astro.props;
+const { placeholder = "Buscar profesores por nombre, departamento o curso..." } = Astro.props;
 ---
 
 <div class="relative">
@@ -23,7 +23,7 @@ const { placeholder = "Search professors by name, department, or course..." } = 
   <button
     id="clear-search"
     class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 hidden transition-colors"
-    aria-label="Clear search"
+    aria-label="Limpiar búsqueda"
   >
     <X class="w-5 h-5" />
   </button>

@@ -1,12 +1,12 @@
-<div id="professors-root" class="font-sans">Loading professors...</div>
+<div id="professors-root" class="font-sans">Cargando profesores...</div>
 
 <script type="module" is:inline>
   const root = document.getElementById("professors-root");
   if (!root) {
-    console.error("Professors root not found");
+    console.error("No se encontró la raíz de profesores");
   } else {
     async function load() {
-      root.textContent = "Loading professors...";
+      root.textContent = "Cargando profesores...";
       try {
         const res = await fetch("/api/professors?university_id=1");
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -24,13 +24,13 @@
 
           const dept = document.createElement("div");
           dept.className = "text-sm text-slate-600";
-          dept.textContent = `Department: ${professor.department ?? "—"}`;
+          dept.textContent = `Departamento: ${professor.department ?? "—"}`;
           el.appendChild(dept);
 
           root.appendChild(el);
         });
       } catch (err) {
-        root.textContent = "Failed to load professors.";
+        root.textContent = "Error al cargar los profesores.";
         console.error(err);
       }
     }

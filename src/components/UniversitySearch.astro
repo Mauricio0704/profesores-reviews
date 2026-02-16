@@ -1,11 +1,13 @@
 ---
-import { Search } from '@lucide/astro';
+import { Search } from "@lucide/astro";
 ---
 
 <div class="w-full max-w-2xl mx-auto mb-8">
   {/* Search Input Container */}
   <div class="relative">
-    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+    <div
+      class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
+    >
       <Search class="h-5 w-5 text-gray-400" />
     </div>
     <input
@@ -28,44 +30,46 @@ import { Search } from '@lucide/astro';
 </div>
 
 <script>
-    const searchInput = document.getElementById('search-input') as HTMLInputElement;
-    const resultsMsg = document.getElementById('search-results-msg');
-    const resultsCountSpan = document.getElementById('results-count');
-    const noResultsSpan = document.getElementById('no-results');
-    const searchTermSpan = document.getElementById('search-term');
+  const searchInput = document.getElementById(
+    "search-input",
+  ) as HTMLInputElement;
+  const resultsMsg = document.getElementById("search-results-msg");
+  const resultsCountSpan = document.getElementById("results-count");
+  const noResultsSpan = document.getElementById("no-results");
+  const searchTermSpan = document.getElementById("search-term");
 
-    searchInput?.addEventListener('input', (e) => {
-        const term = (e.target as HTMLInputElement).value.toLowerCase();
-        
-        const cards = document.querySelectorAll('.university-card-item'); 
-        let visibleCount = 0;
+  searchInput?.addEventListener("input", (e) => {
+    const term = (e.target as HTMLInputElement).value.toLowerCase();
 
-        cards.forEach((card) => {
-        const searchTerms = card.getAttribute('data-search-terms') || '';
-        
-        if (searchTerms.includes(term)) {
-            card.classList.remove('hidden');
-            visibleCount++;
-        } else {
-            card.classList.add('hidden');
-        }
-        });
+    const cards = document.querySelectorAll(".university-card-item");
+    let visibleCount = 0;
 
-        if (resultsMsg && resultsCountSpan && noResultsSpan && searchTermSpan) {
-            if (term === '') {
-                resultsMsg.classList.add('hidden');
-            } else {
-                resultsMsg.classList.remove('hidden');
-                if (visibleCount === 0) {
-                    resultsCountSpan.classList.add('hidden');
-                    noResultsSpan.classList.remove('hidden');
-                    searchTermSpan.textContent = term;
-                } else {
-                    noResultsSpan.classList.add('hidden');
-                    resultsCountSpan.classList.remove('hidden');
-                    resultsCountSpan.textContent = `Found ${visibleCount} ${visibleCount === 1 ? 'university' : 'universities'}`;
-                }
-            }
-        }
+    cards.forEach((card) => {
+      const searchTerms = card.getAttribute("data-search-terms") || "";
+
+      if (searchTerms.includes(term)) {
+        card.classList.remove("hidden");
+        visibleCount++;
+      } else {
+        card.classList.add("hidden");
+      }
     });
+
+    if (resultsMsg && resultsCountSpan && noResultsSpan && searchTermSpan) {
+      if (term === "") {
+        resultsMsg.classList.add("hidden");
+      } else {
+        resultsMsg.classList.remove("hidden");
+        if (visibleCount === 0) {
+          resultsCountSpan.classList.add("hidden");
+          noResultsSpan.classList.remove("hidden");
+          searchTermSpan.textContent = term;
+        } else {
+          noResultsSpan.classList.add("hidden");
+          resultsCountSpan.classList.remove("hidden");
+          resultsCountSpan.textContent = `${visibleCount === 1 ? "Encontrada" : "Encontradas"} ${visibleCount} ${visibleCount === 1 ? "universidad" : "universidades"}`;
+        }
+      }
+    }
+  });
 </script>
